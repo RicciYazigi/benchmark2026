@@ -1,0 +1,36 @@
+# Archivos de compilación de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+build/
+dist/
+*.egg-info/
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Caché e informes de pruebas
+.pytest_cache/
+.coverage
+htmlcov/
+cov.xml
+.mypy_cache/
+.ruff_cache/
+
+# Datos del benchmark y salidas temporales
+.aegisbench_cache/
+reports/
+C:\Users\USER\.aegisbench/
+.aegisbench/
+
+# Archivos de configuración del editor e IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp

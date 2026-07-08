@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "aegisbench"
+version = "1.0.0"
+description = "AegisBench: Un benchmark independiente y reproducible para Sistemas de Gobernanza de IA en tiempo de ejecución"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "AegisBench Authors", email = "author@example.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "click>=8.0.0",
+    "numpy>=1.22.0",
+    "requests>=2.27.0",
+    "jinja2>=3.0.0",
+]
+
+[project.scripts]
+aegisbench = "aegisbench.cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/aegisbench"]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+markers = [
+    "network: tests that require network access"
+]
