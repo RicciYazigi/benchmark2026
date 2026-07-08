@@ -15,7 +15,12 @@ import click
 from aegisbench.adapters.registry import load_adapter
 from aegisbench.attacks.transforms import ATTACK_TRANSFORMS, apply_transform
 from aegisbench.core.runner import Runner
-from aegisbench.datasets.loaders import CACHE_DIR, get_lock_config, load_dataset
+from aegisbench.datasets.loaders import (
+    CACHE_DIR,
+    LOCK_FILE_PATH,
+    get_lock_config,
+    load_dataset,
+)
 from aegisbench.interfaces.v1 import (
     GovernanceDecision,
     Message,
@@ -421,23 +426,24 @@ def doctor() -> None:
     click.echo("=== Diagnóstico AegisBench ===")
 
     # 1. Comprobar archivos del sistema
-    lock_file = os.path.join(os.getcwd(), "configs", "datasets.lock.json")
+    lock_file = LOCK_FILE_PATH
     if os.path.exists(lock_file):
         click.secho(
-            f"✔ Archivo de bloqueo de datasets encontrado: {lock_file}", fg="green"
+            f"[OK] Archivo de bloqueo de datasets encontrado: {lock_file}", fg="green"
         )
     else:
         click.secho(
-            f"✘ Archivo de bloqueo de datasets NO encontrado en {lock_file}", fg="red"
+            f"[ERROR] Archivo de bloqueo de datasets NO encontrado en {lock_file}",
+            fg="red",
         )
 
     # 2. Comprobar directorio de cache
     click.echo(f"Ruta de caché local: {CACHE_DIR}")
     if os.path.exists(CACHE_DIR):
-        click.secho("✔ Directorio de caché local disponible.", fg="green")
+        click.secho("[OK] Directorio de caché local disponible.", fg="green")
     else:
         click.echo(
-            "ℹ Directorio de caché no creado aún (se creará al descargar datasets)."
+            "[INFO] Directorio de caché no creado aún (se creará al descargar datasets)."
         )
 
     # 3. Auto-prueba de consistencia y determinismo con DummyAdapter
@@ -478,17 +484,16 @@ def doctor() -> None:
                     match = False
             if match:
                 click.secho(
-                    "✔ Auto-prueba de consistencia y determinismo exitosa.", fg="green"
+                    "[OK] Auto-prueba de consistencia y determinismo exitosa.",
+                    fg="green",
                 )
             else:
-                click.secho(
-                    "✘ Error: Falló el determinismo del DummyAdapter.", fg="red"
-                )
+                click.secho("[ERROR] Falló el determinismo del DummyAdapter.", fg="red")
         else:
-            click.secho("✘ Error: Resultados de auto-prueba incompletos.", fg="red")
+            click.secho("[ERROR] Resultados de auto-prueba incompletos.", fg="red")
 
     except Exception as e:
-        click.secho(f"✘ Error en la auto-prueba: {e}", fg="red")
+        click.secho(f"[ERROR] En la auto-prueba: {e}", fg="red")
 
 
 if __name__ == "__main__":
