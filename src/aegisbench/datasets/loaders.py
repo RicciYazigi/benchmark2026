@@ -244,7 +244,8 @@ def parse_dataset_file(dataset_name: str, file_path: str) -> List[Sample]:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             reader = csv.DictReader(f)
             for idx, row in enumerate(reader):
-                prompt = row.get("goal") or row.get("behavior") or ""
+                row_lower = {k.lower(): v for k, v in row.items() if k is not None}
+                prompt = row_lower.get("goal") or row_lower.get("behavior") or ""
                 if not prompt:
                     continue
                 samples.append(
@@ -255,19 +256,20 @@ def parse_dataset_file(dataset_name: str, file_path: str) -> List[Sample]:
                         dataset_source="advbench",
                         harm_category="general_harm",
                         ground_truth_should_block=True,
-                        metadata={"target": row.get("target", "")},
+                        metadata={"target": row_lower.get("target", "")},
                     )
                 )
 
     elif dataset_name == "jailbreakbench":
-        # Formato de JailbreakBench CSV. Columnas típicas: goal, category, source_dataset
+        # Formato de JailbreakBench CSV. Columnas típicas: Goal, Category, Source
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             reader = csv.DictReader(f)
             for idx, row in enumerate(reader):
-                prompt = row.get("goal") or row.get("prompt") or ""
+                row_lower = {k.lower(): v for k, v in row.items() if k is not None}
+                prompt = row_lower.get("goal") or row_lower.get("prompt") or ""
                 if not prompt:
                     continue
-                category = row.get("category") or "general"
+                category = row_lower.get("category") or "general"
                 samples.append(
                     Sample(
                         sample_id=f"jbb-{idx}",
@@ -285,11 +287,12 @@ def parse_dataset_file(dataset_name: str, file_path: str) -> List[Sample]:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             reader = csv.DictReader(f)
             for idx, row in enumerate(reader):
-                prompt = row.get("Behavior") or ""
+                row_lower = {k.lower(): v for k, v in row.items() if k is not None}
+                prompt = row_lower.get("behavior") or ""
                 if not prompt:
                     continue
-                behavior_id = row.get("ID") or f"hb-{idx}"
-                category = row.get("Category") or "general"
+                behavior_id = row_lower.get("id") or f"hb-{idx}"
+                category = row_lower.get("category") or "general"
                 samples.append(
                     Sample(
                         sample_id=f"harmbench-{behavior_id}",
@@ -308,10 +311,11 @@ def parse_dataset_file(dataset_name: str, file_path: str) -> List[Sample]:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             reader = csv.DictReader(f)
             for idx, row in enumerate(reader):
-                prompt = row.get("prompt") or ""
+                row_lower = {k.lower(): v for k, v in row.items() if k is not None}
+                prompt = row_lower.get("prompt") or ""
                 if not prompt:
                     continue
-                label = row.get("type") or row.get("label") or "benign"
+                label = row_lower.get("type") or row_lower.get("label") or "benign"
                 samples.append(
                     Sample(
                         sample_id=f"xstest-{idx}",
@@ -334,14 +338,16 @@ def parse_dataset_file(dataset_name: str, file_path: str) -> List[Sample]:
                 data_list = raw_data
             else:
                 data_list = []
-                
+
             for idx, data in enumerate(data_list):
                 # Formato usual: id, prompt o goal, harm_category o category
                 prompt = data.get("prompt") or data.get("goal") or ""
                 if not prompt:
                     continue
                 sample_id = data.get("id") or f"agentharm-{idx}"
-                category = data.get("harm_category") or data.get("category") or "agent_harm"
+                category = (
+                    data.get("harm_category") or data.get("category") or "agent_harm"
+                )
 
                 # Mapear a agente/herramienta (AgentHarm simula interacciones complejas)
                 samples.append(

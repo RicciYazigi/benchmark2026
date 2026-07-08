@@ -21,8 +21,8 @@ cov.xml
 .ruff_cache/
 
 # Datos del benchmark y salidas temporales
-.aegisbench_cache/
-reports/
+/.aegisbench_cache/
+/reports/
 C:\Users\USER\.aegisbench/
 .aegisbench/
 
