@@ -187,6 +187,12 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <p style="color: var(--text-muted);">Evaluación reproducible de sistemas de seguridad en tiempo de ejecución</p>
         </header>
 
+        {% if summary.synthetic_fallback %}
+        <div style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 1rem; border-radius: 8px; margin-bottom: 2rem; font-weight: bold;">
+            {{ summary.synthetic_fallback_warning }}
+        </div>
+        {% endif %}
+
         <!-- Métricas Principales -->
         <div class="meta-grid">
             <div class="card">
@@ -445,21 +451,30 @@ def generate_markdown_report(
     lines = [
         "# Reporte de Evaluación AegisBench v1.0",
         "",
-        "## Resumen de Ejecución",
-        f"- **Adaptador Evaluado:** `{summary.get('adapter_name')}` (versión `{summary.get('adapter_version')}`)",
-        f"- **Semilla de Simulación:** `{summary.get('seed')}`",
-        f"- **Muestras Totales:** {summary.get('total_samples')}",
-        f"- **Latencia Promedio:** {summary.get('mean_latency_ms', 0.0):.2f} ms",
-        "",
-        "## Métricas Principales",
-        "| Métrica | Estimación Puntual | Intervalo de Confianza (95%) |",
-        "| :--- | :---: | :---: |",
-        f"| **Attack Success Rate (ASR)** | {rates['asr'] * 100:.2f}% | [{ci['asr'][0] * 100:.2f}%, {ci['asr'][1] * 100:.2f}%] |",
-        f"| **Over-Refusal Rate (ORR)** | {rates['orr'] * 100:.2f}% | [{ci['orr'][0] * 100:.2f}%, {ci['orr'][1] * 100:.2f}%] |",
-        f"| **Escalation Rate (Tasa de Escalación)** | {rates['escalation_rate'] * 100:.2f}% | [{ci['escalation_rate'][0] * 100:.2f}%, {ci['escalation_rate'][1] * 100:.2f}%] |",
-        "",
-        "## Estadísticas Adicionales (Con Confianza)",
     ]
+    if summary.get("synthetic_fallback"):
+        lines.extend(
+            ["> [!WARNING]", f"> {summary.get('synthetic_fallback_warning')}", ""]
+        )
+
+    lines.extend(
+        [
+            "## Resumen de Ejecución",
+            f"- **Adaptador Evaluado:** `{summary.get('adapter_name')}` (versión `{summary.get('adapter_version')}`)",
+            f"- **Semilla de Simulación:** `{summary.get('seed')}`",
+            f"- **Muestras Totales:** {summary.get('total_samples')}",
+            f"- **Latencia Promedio:** {summary.get('mean_latency_ms', 0.0):.2f} ms",
+            "",
+            "## Métricas Principales",
+            "| Métrica | Estimación Puntual | Intervalo de Confianza (95%) |",
+            "| :--- | :---: | :---: |",
+            f"| **Attack Success Rate (ASR)** | {rates['asr'] * 100:.2f}% | [{ci['asr'][0] * 100:.2f}%, {ci['asr'][1] * 100:.2f}%] |",
+            f"| **Over-Refusal Rate (ORR)** | {rates['orr'] * 100:.2f}% | [{ci['orr'][0] * 100:.2f}%, {ci['orr'][1] * 100:.2f}%] |",
+            f"| **Escalation Rate (Tasa de Escalación)** | {rates['escalation_rate'] * 100:.2f}% | [{ci['escalation_rate'][0] * 100:.2f}%, {ci['escalation_rate'][1] * 100:.2f}%] |",
+            "",
+            "## Estadísticas Adicionales (Con Confianza)",
+        ]
+    )
 
     if isinstance(advanced.get("auroc"), str):
         lines.append(f"*Nota: {advanced.get('auroc')}*")

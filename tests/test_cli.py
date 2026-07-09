@@ -142,3 +142,51 @@ def test_cli_report(runner):
         )
         assert result.exit_code == 0
         assert os.path.exists(output_csv)
+
+
+def test_cli_synthetic_fallback_report(runner, monkeypatch):
+    import json
+
+    from aegisbench.datasets import loaders
+
+    # Mock download_file to always raise an exception
+    def mock_download_file(*args, **kwargs):
+        raise ValueError("Simulated download failure")
+
+    monkeypatch.setattr(loaders, "download_file", mock_download_file)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        result = runner.invoke(
+            main,
+            [
+                "run",
+                "--adapter",
+                "dummy",
+                "--dataset",
+                "xstest",
+                "--n",
+                "2",
+                "--output",
+                tmpdir,
+            ],
+        )
+        assert result.exit_code == 0
+
+        # Verify CLI output has red warning
+        assert "ADVERTENCIA:" in result.output
+
+        # Verify files generated
+        report_json_path = os.path.join(tmpdir, "report.json")
+        assert os.path.exists(report_json_path)
+        with open(report_json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        assert data["summary"]["synthetic_fallback"] is True
+        assert data["summary"]["synthetic_fallback_samples"] > 0
+        assert "synthetic_fallback_warning" in data["summary"]
+
+        # Verify that sample rows have synthetic_fallback == True
+        samples = data.get("samples", [])
+        assert len(samples) > 0
+        for sample in samples:
+            assert sample["synthetic_fallback"] is True

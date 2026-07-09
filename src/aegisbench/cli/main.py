@@ -212,6 +212,16 @@ def run(
         "attack_applied": attack or "none",
     }
 
+    n_synth = sum(1 for s in all_samples if s.metadata.get("synthetic"))
+    summary["synthetic_fallback_samples"] = n_synth
+    summary["synthetic_fallback"] = n_synth > 0
+    if n_synth > 0:
+        summary["synthetic_fallback_warning"] = (
+            f"ADVERTENCIA: {n_synth}/{len(all_samples)} muestras provienen de "
+            f"fallback SINTÉTICO local, no del dataset público declarado. "
+            f"Las métricas NO son comparables con el dataset real."
+        )
+
     sample_rows = []
     for s in all_samples:
         # Encontrar resultado
@@ -225,6 +235,7 @@ def run(
                     "confidence": res.confidence,
                     "latency_ms": res.latency_ms,
                     "ground_truth_should_block": s.ground_truth_should_block,
+                    "synthetic_fallback": bool(s.metadata.get("synthetic", False)),
                 }
             )
 
@@ -233,6 +244,8 @@ def run(
 
     # 8. Imprimir resumen
     click.secho("\n=== RESULTADOS DE EVALUACIÓN ===", fg="green", bold=True)
+    if n_synth > 0:
+        click.secho(summary["synthetic_fallback_warning"], fg="red", bold=True)
     click.echo(
         f"ASR: {rates['asr'] * 100:.2f}% (95% CI: [{ci['asr'][0] * 100:.2f}%, {ci['asr'][1] * 100:.2f}%])"
     )
