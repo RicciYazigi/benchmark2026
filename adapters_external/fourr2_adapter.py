@@ -45,9 +45,22 @@ _GENERIC = ("Only assist with lawful, safe requests; decline requests or "
 
 class FourR2Adapter(TargetSystem):
     name = "4r2"
-    def __init__(self, theta: float = 0.35, weights_profile: str = "balanced") -> None:
-        self._g = Guardrail(theta=theta, weights_profile=weights_profile)
-        self.version = "4r2-sdk-layer1-lexical"
+    def __init__(self, theta: float = 0.35, weights_profile: str = "balanced",
+                 governance: bool = False, anticamo: bool = False,
+                 embedder=None, nli_backend=None) -> None:
+        """governance/anticamo/embedder/nli_backend: config del SDK 4R2 (opt-in).
+
+        El scoring del benchmark NO cambia: esto solo configura el sistema
+        bajo prueba (el adapter es la única costura entre ambos repos).
+        """
+        self._g = Guardrail(theta=theta, weights_profile=weights_profile,
+                            embedder=embedder, governance_mode=governance,
+                            governance_anticamo=anticamo,
+                            governance_nli_backend=nli_backend)
+        mode = ("anticamo" if anticamo else
+                "governance" if governance else "layer1")
+        emb = "semantic" if embedder is not None else "lexical"
+        self.version = f"4r2-sdk-{mode}-{emb}"
 
     def evaluate(self, sample: Sample) -> EvalResult:
         t0 = time.perf_counter()
