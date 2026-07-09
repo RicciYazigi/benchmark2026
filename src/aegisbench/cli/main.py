@@ -97,6 +97,12 @@ def main() -> None:
     is_flag=True,
     help="Incluir el split held-out (20%) en la evaluación (uso avanzado).",
 )
+@click.option(
+    "--strict-datasets",
+    is_flag=True,
+    help="Fallar (exit 1) si un dataset real no se puede descargar/validar, "
+    "en vez de sustituir por datos sintéticos. Usar en runs oficiales/CI.",
+)
 def run(
     adapter: str,
     dataset: str,
@@ -107,6 +113,7 @@ def run(
     attack: Optional[str],
     accept_agentharm_terms: bool,
     include_held_out: bool,
+    strict_datasets: bool,
 ) -> None:
     """Ejecuta una evaluación del benchmark para un adaptador contra datasets seleccionados."""
     click.echo(f"Iniciando evaluación con el adaptador: {adapter}")
@@ -139,6 +146,7 @@ def run(
                 dname,
                 include_held_out=include_held_out,
                 accept_terms=accept_agentharm_terms,
+                strict=strict_datasets,
             )
             if not samples and dname == "agentharm" and not accept_agentharm_terms:
                 click.secho(
@@ -154,6 +162,14 @@ def run(
             all_samples.extend(samples)
         except Exception as e:
             click.secho(f"Error cargando dataset {dname}: {e}", fg="red", err=True)
+            if strict_datasets:
+                click.secho(
+                    "Modo --strict-datasets: abortando por fallo de dataset real.",
+                    fg="red",
+                    bold=True,
+                    err=True,
+                )
+                sys.exit(1)
 
     if not all_samples:
         click.secho("No se cargaron muestras para evaluar. Abortando.", fg="yellow")

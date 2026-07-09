@@ -190,3 +190,29 @@ def test_cli_synthetic_fallback_report(runner, monkeypatch):
         assert len(samples) > 0
         for sample in samples:
             assert sample["synthetic_fallback"] is True
+
+
+def test_cli_run_strict_datasets_aborts(runner, monkeypatch):
+    """--strict-datasets debe abortar con exit 1 si el dataset real falla."""
+    import aegisbench.datasets.loaders as loaders
+
+    monkeypatch.setattr(
+        loaders,
+        "download_file",
+        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("offline")),
+    )
+    with tempfile.TemporaryDirectory() as tmp:
+        result = runner.invoke(
+            main,
+            [
+                "run",
+                "--adapter",
+                "dummy",
+                "--dataset",
+                "advbench",
+                "--strict-datasets",
+                "--output",
+                tmp,
+            ],
+        )
+    assert result.exit_code == 1

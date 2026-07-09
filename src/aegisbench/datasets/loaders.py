@@ -9,7 +9,8 @@ import hashlib
 import json
 import logging
 import os
-from typing import Any, Dict, List
+import time
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -46,8 +47,11 @@ def calculate_sha256(file_path: str) -> str:
     return sha256.hexdigest()
 
 
+DOWNLOAD_MAX_RETRIES = 3
+
+
 def download_file(url: str, dest_path: str, expected_sha256: str) -> None:
-    """Descarga un archivo y valida su integridad SHA256."""
+    """Descarga un archivo y valida su integridad SHA256, con reintentos y backoff."""
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
 
     # Si ya existe y el hash coincide, no descargar
@@ -60,24 +64,51 @@ def download_file(url: str, dest_path: str, expected_sha256: str) -> None:
             )
             os.remove(dest_path)
 
-    logger.info(f"Descargando {url} a {dest_path}...")
-    response = requests.get(url, stream=True, timeout=30)
-    response.raise_for_status()
-
-    with open(dest_path, "wb") as f:
-        for chunk in response.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
-
-    # Validar integridad
-    actual_sha256 = calculate_sha256(dest_path)
-    if actual_sha256 != expected_sha256:
-        os.remove(dest_path)
-        raise ValueError(
-            f"Fallo de integridad para {url}.\n"
-            f"Esperado: {expected_sha256}\n"
-            f"Obtenido: {actual_sha256}"
-        )
+    last_err: Optional[Exception] = None
+    for attempt in range(1, DOWNLOAD_MAX_RETRIES + 1):
+        try:
+            logger.info(
+                f"Descargando {url} a {dest_path} "
+                f"(intento {attempt}/{DOWNLOAD_MAX_RETRIES})..."
+            )
+            response = requests.get(url, stream=True, timeout=30)
+            # Reintentar en errores transitorios (429, 5xx) respetando Retry-After.
+            if response.status_code == 429 or response.status_code >= 500:
+                ra = response.headers.get("Retry-After", "")
+                wait = float(ra) if ra.isdigit() else 2.0**attempt
+                logger.warning(
+                    f"HTTP {response.status_code} para {url}; "
+                    f"reintentando en {wait:.1f}s..."
+                )
+                last_err = RuntimeError(f"HTTP {response.status_code}")
+                time.sleep(wait)
+                continue
+            response.raise_for_status()
+            with open(dest_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            actual_sha256 = calculate_sha256(dest_path)
+            if actual_sha256 != expected_sha256:
+                os.remove(dest_path)
+                raise ValueError(
+                    f"Fallo de integridad para {url}.\n"
+                    f"Esperado: {expected_sha256}\n"
+                    f"Obtenido: {actual_sha256}"
+                )
+            return
+        except ValueError:
+            raise  # hash mismatch: fallo duro, no reintentar
+        except requests.RequestException as e:
+            last_err = e
+            wait = 2.0**attempt
+            logger.warning(
+                f"Error de red para {url}: {e}; reintentando en {wait:.1f}s..."
+            )
+            time.sleep(wait)
+    raise RuntimeError(
+        f"No se pudo descargar {url} tras {DOWNLOAD_MAX_RETRIES} intentos: {last_err}"
+    )
 
 
 def get_held_out_split(sample_id: str) -> str:
@@ -554,7 +585,10 @@ def _get_policy_compliance_samples() -> List[Sample]:
 
 
 def load_dataset(
-    dataset_name: str, include_held_out: bool = False, accept_terms: bool = False
+    dataset_name: str,
+    include_held_out: bool = False,
+    accept_terms: bool = False,
+    strict: bool = False,
 ) -> List[Sample]:
     """
     Carga un dataset específico, descargándolo si es necesario.
@@ -567,6 +601,11 @@ def load_dataset(
         )
 
     dataset_info = config[dataset_name]
+
+    # Aceptación no-interactiva de términos (CI): env var complementa la flag CLI.
+    accept_terms = accept_terms or os.environ.get(
+        "AEGISBENCH_ACCEPT_AGENTHARM", ""
+    ).lower() in ("1", "true", "yes")
 
     # Validación de términos para AgentHarm
     if dataset_name == "agentharm" and not accept_terms:
@@ -593,6 +632,12 @@ def load_dataset(
         try:
             download_file(dataset_info["url"], dest_path, dataset_info["sha256"])
         except Exception as e:
+            if strict:
+                raise RuntimeError(
+                    f"[strict] No se pudo obtener el dataset REAL '{dataset_name}': {e}. "
+                    "Abortando en vez de sustituir por datos sintéticos "
+                    "(modo estricto para runs oficiales/CI)."
+                ) from e
             logger.warning(
                 f"No se pudo descargar o validar {dataset_name} ({e}). "
                 "Usando datos sintéticos de fallback locales para desarrollo/offline."

@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+import hashlib
 import os
 import tempfile
+from unittest import mock
 
 import pytest
 
+import aegisbench.datasets.loaders as loaders
 from aegisbench.datasets.loaders import (
     calculate_sha256,
     get_held_out_split,
@@ -199,3 +202,74 @@ def test_policy_compliance_dummy_adapter():
             GovernanceDecision.BLOCK,
             GovernanceDecision.ESCALATE,
         )
+
+
+# --- Robustez de red / integridad (Fase 1) ---
+
+
+class _FakeResp:
+    def __init__(self, status_code=200, content=b"", headers=None):
+        self.status_code = status_code
+        self._content = content
+        self.headers = headers or {}
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            import requests
+
+            raise requests.HTTPError(f"HTTP {self.status_code}")
+
+    def iter_content(self, chunk_size=8192):
+        yield self._content
+
+
+def test_download_file_retries_on_429_then_succeeds(tmp_path):
+    """Un 429 transitorio debe reintentarse y terminar en éxito, no fallar."""
+    payload = b"hello-world"
+    good_sha = hashlib.sha256(payload).hexdigest()
+    dest = str(tmp_path / "d.tmp")
+    seq = [_FakeResp(429, headers={"Retry-After": "0"}), _FakeResp(200, payload)]
+
+    with (
+        mock.patch.object(loaders.requests, "get", side_effect=seq) as m,
+        mock.patch.object(loaders.time, "sleep", return_value=None),
+    ):
+        loaders.download_file("http://x/y", dest, good_sha)
+    assert m.call_count == 2
+    assert loaders.calculate_sha256(dest) == good_sha
+
+
+def test_download_file_gives_up_after_max_retries(tmp_path):
+    dest = str(tmp_path / "d.tmp")
+    resp = _FakeResp(503)
+    with (
+        mock.patch.object(loaders.requests, "get", return_value=resp),
+        mock.patch.object(loaders.time, "sleep", return_value=None),
+    ):
+        with pytest.raises(RuntimeError):
+            loaders.download_file("http://x/y", dest, "deadbeef")
+
+
+def test_load_dataset_strict_raises_instead_of_synthetic():
+    """En modo estricto, un fallo de descarga debe abortar, no sustituir por sintético."""
+    with mock.patch.object(loaders, "download_file", side_effect=RuntimeError("boom")):
+        with pytest.raises(RuntimeError):
+            load_dataset("advbench", strict=True)
+
+
+def test_load_dataset_non_strict_falls_back_to_synthetic():
+    with mock.patch.object(loaders, "download_file", side_effect=RuntimeError("boom")):
+        s = load_dataset("advbench", strict=False)
+    assert len(s) > 0
+    assert all(x.metadata.get("synthetic") for x in s)
+
+
+def test_agentharm_env_var_bypasses_terms_gate(monkeypatch):
+    """La env var AEGISBENCH_ACCEPT_AGENTHARM debe habilitar agentharm sin la flag CLI."""
+    monkeypatch.setenv("AEGISBENCH_ACCEPT_AGENTHARM", "1")
+    with mock.patch.object(
+        loaders, "download_file", side_effect=RuntimeError("offline")
+    ):
+        s = load_dataset("agentharm", strict=False)
+    # Con la env var, NO se corta en el gate de términos: procede (y cae a sintético).
+    assert len(s) > 0
