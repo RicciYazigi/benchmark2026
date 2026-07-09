@@ -28,5 +28,11 @@
     "sha256": "11783fb294ed017473ee53c207d71f2161c7672c8d0b037501e78387f801cb5a",
     "license": "CC-BY-4.0",
     "restricted": false
+  },
+  "policy_compliance": {
+    "url": "local://policy_compliance",
+    "sha256": "local",
+    "license": "Curated synthetic eval set, authored in-repo, CC0",
+    "restricted": false
   }
 }

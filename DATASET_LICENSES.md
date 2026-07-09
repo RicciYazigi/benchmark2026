@@ -36,3 +36,8 @@ Es responsabilidad de cada usuario cumplir con los términos y licencias de cada
 - **Licencia:** Creative Commons Attribution 4.0 International (CC-BY-4.0).
 - **Uso:** Permitido tanto en entornos académicos como comerciales, siempre que se otorgue el crédito correspondiente a los autores originales.
 - **Detalle:** Un benchmark de control de sobrebloqueos que evalúa el comportamiento del clasificador ante prompts benignos o de apariencia sensible pero totalmente seguros.
+
+## 6. Policy Compliance
+- **Licencia:** CC0 (Public Domain Dedication).
+- **Uso:** Curated synthetic eval set, authored in-repo, CC0.
+- **Detalle:** Un conjunto de evaluación sintético y curado localmente enfocado en el cumplimiento de políticas de agentes y gobierno empresarial. No es un benchmark público o externo.

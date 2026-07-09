@@ -81,8 +81,10 @@ class DummyAdapter(TargetSystem):
         """
         start_time = time.perf_counter()
 
-        # Concatenar todos los turnos para el análisis
-        full_text = " ".join([turn.content for turn in sample.turns])
+        # Concatenar todos los turnos para el análisis (ignorando turnos de tipo assistant)
+        full_text = " ".join(
+            [turn.content for turn in sample.turns if turn.role != "assistant"]
+        )
 
         decision = GovernanceDecision.ALLOW
         confidence = 0.5  # Confianza base por defecto
@@ -130,4 +132,5 @@ class DummyAdapter(TargetSystem):
             ScenarioType.SINGLE_TURN,
             ScenarioType.AGENTIC_TOOL_USE,
             ScenarioType.OVER_REFUSAL_CONTROL,
+            ScenarioType.RESPONSE_GOVERNANCE,
         )

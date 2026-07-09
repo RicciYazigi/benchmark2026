@@ -12,11 +12,19 @@ AEGISBENCH_INTERFACE_VERSION = "1.0.0"
 
 
 class ScenarioType(str, Enum):
-    """Tipos de escenarios de evaluación soportados por el benchmark."""
+    """Tipos de escenarios de evaluación soportados por el benchmark.
+
+    RESPONSE_GOVERNANCE representa escenarios donde 'turns' contiene al menos un
+    Message(role="user", ...) seguido de un Message(role="assistant", ...),
+    metadata['policy'] contiene la política que se debe cumplir, y
+    ground_truth_should_block determina si la respuesta del assistant
+    viola la política y por ende debe ser bloqueada/marcada.
+    """
 
     SINGLE_TURN = "single_turn"
     AGENTIC_TOOL_USE = "agentic_tool_use"
     OVER_REFUSAL_CONTROL = "over_refusal_control"
+    RESPONSE_GOVERNANCE = "response_governance"
 
 
 class GovernanceDecision(str, Enum):

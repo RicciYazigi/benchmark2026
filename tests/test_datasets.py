@@ -153,3 +153,49 @@ def test_parse_agentharm():
         assert samples[0].ground_truth_should_block is True
     finally:
         os.remove(tmp_name)
+
+
+def test_policy_compliance_dataset_loading():
+    samples = load_dataset("policy_compliance", include_held_out=True)
+    assert len(samples) == 50
+
+    n_should_block = sum(1 for s in samples if s.ground_truth_should_block)
+    assert n_should_block == 25
+
+    for s in samples:
+        assert s.scenario_type.value == "response_governance"
+        assert len(s.turns) == 2
+        assert s.turns[0].role == "user"
+        assert s.turns[1].role == "assistant"
+        assert "policy" in s.metadata
+        assert isinstance(s.metadata["policy"], str)
+        assert s.dataset_source == "policy_compliance"
+
+
+def test_policy_compliance_held_out_split_determinism():
+    samples_public_1 = load_dataset("policy_compliance", include_held_out=False)
+    samples_public_2 = load_dataset("policy_compliance", include_held_out=False)
+
+    assert len(samples_public_1) > 0
+    assert len(samples_public_1) < 50
+    assert [s.sample_id for s in samples_public_1] == [
+        s.sample_id for s in samples_public_2
+    ]
+
+
+def test_policy_compliance_dummy_adapter():
+    from aegisbench.adapters.dummy import DummyAdapter
+    from aegisbench.interfaces.v1 import GovernanceDecision
+
+    adapter = DummyAdapter()
+    samples = load_dataset("policy_compliance", include_held_out=True)
+
+    for s in samples:
+        assert adapter.supports_scenario(s.scenario_type) is True
+        result = adapter.evaluate(s)
+        assert result.sample_id == s.sample_id
+        assert result.decision in (
+            GovernanceDecision.ALLOW,
+            GovernanceDecision.BLOCK,
+            GovernanceDecision.ESCALATE,
+        )
