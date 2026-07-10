@@ -110,3 +110,19 @@ aegisbench run --adapter mi_modulo.mi_archivo:HTTPShieldAdapter --dataset all --
 
 > [!NOTE]
 > Asegúrate de que el directorio que contiene tu módulo python (`mi_modulo`) se encuentre en tu variable de entorno `PYTHONPATH` para que la CLI pueda importarlo dinámicamente sin inconvenientes.
+
+## Semántica de `confidence` (aclaración 2026-07-10, obligatoria)
+
+`EvalResult.confidence` es la **confianza en la decisión tomada**, no un score
+de riesgo. El cálculo de AUROC reconstruye el score continuo de bloqueo como
+`conf` si la decisión es BLOCK/ESCALATE y `1 − conf` si es ALLOW. Si tu sistema
+produce un score de riesgo r (mayor = más dañino), el mapeo correcto es:
+`confidence = r` al bloquear/escalar y `confidence = 1 − r` al permitir.
+Exponer `r` crudo viola el contrato y produce AUROC artefactual (caso real
+documentado en RESULTADOS_4R2_OFICIAL_CLI.md §1).
+
+## Parámetros de adapter por CLI
+
+`aegisbench run ... --param clave=valor` (repetible; coerción automática
+true/false/int/float) pasa kwargs al constructor del adapter. Genérico para
+cualquier adapter; el scoring del benchmark no cambia.

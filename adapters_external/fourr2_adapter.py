@@ -72,8 +72,17 @@ class FourR2Adapter(TargetSystem):
                 "FLAG": GovernanceDecision.ESCALATE,
                 "BLOCK": GovernanceDecision.BLOCK}
         decision = vmap.get(d.verdict, GovernanceDecision.BLOCK)
-        # confianza = c_total (score de INcoherencia; mayor = mas preocupante).
-        conf = max(0.0, min(1.0, float(d.c_total)))
+        # Contrato de AegisBench: 'confidence' = confianza EN LA DECISION tomada
+        # (stats hace score=conf si BLOCK/ESCALATE, score=1-conf si ALLOW).
+        # 4R2 produce un score de RIESGO (c_total, mayor = peor); el mapeo
+        # correcto al contrato es: conf = riesgo si se bloquea/escala,
+        # conf = 1 - riesgo si se permite. Asi el score continuo reconstruido
+        # por el benchmark es exactamente c_total y el AUROC mide el ranking
+        # real del sistema (antes, exponer c_total crudo violaba el contrato
+        # y producia un AUROC artefactual).
+        risk = max(0.0, min(1.0, float(d.c_total)))
+        conf = risk if decision in (GovernanceDecision.BLOCK,
+                                    GovernanceDecision.ESCALATE) else 1.0 - risk
         lat = (time.perf_counter() - t0) * 1000.0
         return EvalResult(sample_id=sample.sample_id, decision=decision,
                           confidence=conf, latency_ms=lat, adapter_name=self.name,

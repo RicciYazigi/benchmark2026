@@ -35,6 +35,21 @@ from aegisbench.stats.bootstrap import (
 )
 
 
+def _coerce_param(v: str):
+    low = v.lower()
+    if low in ("true", "false"):
+        return low == "true"
+    try:
+        return int(v)
+    except ValueError:
+        pass
+    try:
+        return float(v)
+    except ValueError:
+        pass
+    return v
+
+
 @click.group()
 def main() -> None:
     """AegisBench: Suite de evaluación y robustez para Sistemas de Gobernanza de IA."""
@@ -103,6 +118,15 @@ def main() -> None:
     help="Fallar (exit 1) si un dataset real no se puede descargar/validar, "
     "en vez de sustituir por datos sintéticos. Usar en runs oficiales/CI.",
 )
+@click.option(
+    "--param",
+    "params",
+    multiple=True,
+    help="Parámetro de constructor para el adaptador, formato clave=valor "
+    "(repetible). Coerción automática: true/false, int, float; si no, str. "
+    "Genérico para CUALQUIER adaptador; queda registrado en el reporte "
+    "(adapter_version del propio adaptador debe reflejar su modo).",
+)
 def run(
     adapter: str,
     dataset: str,
@@ -114,13 +138,14 @@ def run(
     accept_agentharm_terms: bool,
     include_held_out: bool,
     strict_datasets: bool,
+    params: tuple = (),
 ) -> None:
     """Ejecuta una evaluación del benchmark para un adaptador contra datasets seleccionados."""
     click.echo(f"Iniciando evaluación con el adaptador: {adapter}")
 
     # 1. Instanciar el adaptador
     try:
-        target_system = load_adapter(adapter)
+        target_system = load_adapter(adapter, **{k: _coerce_param(v) for k, v in (p.split('=', 1) for p in params)})
     except Exception as e:
         click.secho(f"Error cargando el adaptador: {e}", fg="red", err=True)
         sys.exit(1)
