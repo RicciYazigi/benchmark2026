@@ -1,0 +1,51 @@
+{
+ "trace_id": "ATBENCH-TRAYECTORIA-EVAL",
+ "generated_at": "2026-07-14T02:49:00.630003Z",
+ "dataset_info": {
+  "name": "ATBench",
+  "path": "data/atbench_test.jsonl",
+  "total_samples": 1000,
+  "positives": 497,
+  "negatives": 503
+ },
+ "configs": {
+  "theta": 0.35,
+  "tau": 5.0,
+  "T_trip": 0.3,
+  "detector_mode": "cca"
+ },
+ "metrics": {
+  "memory_adapter": {
+   "accuracy": 0.549,
+   "precision": 0.5271,
+   "recall": 0.9014,
+   "f1": 0.6652,
+   "tp": 448,
+   "fp": 402,
+   "tn": 101,
+   "fn": 49,
+   "auroc": 0.3335,
+   "mean_latency_ms": 0.2596
+  },
+  "baseline_adapter": {
+   "accuracy": 0.497,
+   "precision": 0.497,
+   "recall": 1.0,
+   "f1": 0.664,
+   "tp": 497,
+   "fp": 503,
+   "tn": 0,
+   "fn": 0,
+   "auroc": 0.5538,
+   "mean_latency_ms": 0.1863
+  }
+ },
+ "detection_turn_analysis": {
+  "N_coincidences": 448,
+  "mean_turn_memory": 2.83,
+  "mean_turn_baseline": 0.0,
+  "memory_faster_count": 0,
+  "baseline_faster_count": 446,
+  "same_turn_count": 2
+ }
+}
