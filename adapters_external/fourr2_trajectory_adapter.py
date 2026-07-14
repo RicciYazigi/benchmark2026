@@ -107,6 +107,9 @@ class FourR2TrajectoryAdapter(TargetSystem):
             raise ValueError(f"Modo desconocido: {self.mode}. Usar 'cca' o 'c_ni'")
 
         policy = sample.metadata.get("policy") or _GENERIC
+        req = sample.turns[0].content if sample.turns else "neutral"
+        if not req.strip():
+            req = "neutral"
 
         tripped_at_turn: Optional[int] = None
         has_tripped = False
@@ -122,7 +125,7 @@ class FourR2TrajectoryAdapter(TargetSystem):
                     obs = cca.observe(user_input=turn.content, ai_output="")
                 criticality = float(obs["criticality"])
             else:
-                d = g.evaluate(policy=policy, request="", response=turn.content)
+                d = g.evaluate(policy=policy, request=req, response=turn.content)
                 criticality = float(d.c_total)
 
             # 3) Registrar en el acumulador usando el índice del turno como t lógico
