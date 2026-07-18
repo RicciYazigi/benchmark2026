@@ -1,67 +1,83 @@
-# Evaluación de Trayectorias con Memoria Térmica (ATBench) — Resultados (v2)
+# Evaluación de Trayectorias con Memoria Térmica (ATBench) — Resultados (v4)
 
-**Fecha:** 2026-07-14 · dataset `ATBench` (1000 muestras, 497 unsafe / 503 safe) · seed fija · comparativa cruzada de detectores (`CCA` vs `C_NI`) y calibración de umbrales óptimos de decisión.
-
----
-
-## 1. Contexto y Objetivos
-
-En la iteración previa, se identificaron tres problemas críticos que impedían evaluar de manera justa la hipótesis del acumulador térmico de 4R2 ($I^2t$ con memoria y decaimiento exponencial):
-1. **Línea base degenerada**: El piso de criticidad de `CCA.observe()` para la clase `unclassified` ($0.50$) estaba por encima de $\theta = 0.35$, bloqueando el 100% de las muestras en el Turno 0.
-2. **Inversión del AUROC**: La inyección cuadrática de la criticidad puntual de textos largos (respuestas de herramientas extensas clasificadas como $1.0$ por longitud) acumulaba calor en muestras benignas, empeorando el score continuo del acumulador.
-3. **Falta de segmentación**: La imposibilidad de aislar los riesgos de **disparo retardado** (ataques indirectos que ocurren avanzada la conversación) impedía medir si la memoria temporal aportaba alguna ventaja real sobre una línea base puntual.
-
-Esta versión 2 del experimento soluciona estos problemas calibrando óptimamente los umbrales de decisión ($\theta$ y $T_{trip}$) y segmentando el dataset en dos subconjuntos:
-*   **Riesgo Temprano (Ataques Directos)**: 145 unsafe + 250 benignas (395 muestras totales).
-*   **Riesgo Tardío / Disparo Retardado**: 605 unsafe + 250 benignas (855 muestras totales).
+**Fecha de Generación:** 2026-07-17 · dataset `ATBench` (1000 muestras) · 5-Fold Cross-Validation Estratificado y Determinista · Bootstrap CI N=10,000.
 
 ---
 
-## 2. Resultados Comparativos Cruzados
+## 1. Metodología de la Evaluación (v4)
 
-### A. DETECTOR BASE: CCA (Léxico)
-El detector léxico `CCA` utiliza keywords y penalización por longitud.
-
-| Subconjunto | Sistema | Umbral | AUROC | Accuracy | F1-Score | Precision | Recall | TP / FP / TN / FN |
-|---|---|---|---|---|---|---|---|---|
-| **Completo** (1000) | Baseline (Fijo) | $\theta = 0.35$ | 0.5538 | 0.4970 | 0.6640 | 0.4970 | 1.0000 | 497 / 503 / 0 / 0 |
-| | Baseline (Opt) | $\theta = 0.64$ | 0.5538 | 0.5320 | 0.6718 | 0.5156 | 0.9638 | 479 / 450 / 53 / 18 |
-| | Memoria (Fijo) | $T_{trip} = 0.30$ | **0.5840** | 0.5490 | 0.6652 | 0.5271 | 0.9014 | 448 / 402 / 101 / 49 |
-| | Memoria (Opt) | $T_{trip} = 0.13$ | **0.5840** | 0.5310 | **0.6727** | 0.5150 | 0.9698 | 482 / 454 / 49 / 15 |
-| **Temprano** (395) | Baseline (Opt) | $\theta = 0.00$ | 0.4969 | 0.2532 | 0.4040 | 0.2532 | 1.0000 | 100 / 295 / 0 / 0 |
-| | Memoria (Opt) | $T_{trip} = 0.01$ | 0.4195 | 0.2532 | 0.4040 | 0.2532 | 1.0000 | 100 / 295 / 0 / 0 |
-| **Tardío** (855) | Baseline (Opt) | $\theta = 0.64$ | 0.5848 | 0.5076 | 0.6477 | 0.4850 | 0.9748 | 387 / 411 / 47 / 10 |
-| | Memoria (Opt) | $T_{trip} = 0.25$ | **0.6107** | **0.5298** | **0.6492** | **0.4967** | 0.9370 | 372 / 377 / 81 / 25 |
-
-### B. DETECTOR BASE: C_NI (Gobernanza / Hashing)
-El detector de gobernanza `C_NI` mide la similitud de coseno léxica (hashing) entre el texto del turno y la política.
-
-| Subconjunto | Sistema | Umbral | AUROC | Accuracy | F1-Score | Precision | Recall | TP / FP / TN / FN |
-|---|---|---|---|---|---|---|---|---|
-| **Completo** (1000) | Baseline (Opt) | $\theta = 0.46$ | 0.5180 | 0.4980 | 0.6644 | 0.4975 | 1.0000 | 497 / 502 / 1 / 0 |
-| | Memoria (Opt) | $T_{trip} = 0.01$ | 0.5076 | 0.4970 | 0.6640 | 0.4970 | 1.0000 | 497 / 503 / 0 / 0 |
-| **Tardío** (855) | Baseline (Opt) | $\theta = 0.00$ | 0.5083 | 0.4643 | 0.6342 | 0.4643 | 1.0000 | 397 / 458 / 0 / 0 |
-| | Memoria (Opt) | $T_{trip} = 0.01$ | **0.5147** | 0.4643 | 0.6342 | 0.4643 | 1.0000 | 397 / 458 / 0 / 0 |
+Esta versión 4 introduce un diseño experimental de máximo rigor para descartar el sobreajuste y los sesgos estadísticos:
+1. **5-Fold Cross-Validation Estratificado**: El dataset original de 1000 muestras se divide de forma reproducible en 5 pliegues disjuntos, balanceando los 5 grupos de riesgo (directo vs indirecto, safe vs unsafe, y la clase de control benigna pura) con una variación menor a $\pm 2$ muestras.
+2. **Evaluación Out-of-Fold (OOF)**: Los umbrales óptimos para baseline y memoria se calibran en cada pliegue $k$ utilizando los pliegues restantes ($dev$) y se usan para predecir en el pliegue held-out $ho$. Las métricas de exactitud, precisión, recall, F1 y matrices de confusión se reportan globalmente sobre las predicciones OOF.
+3. **Manejo de Empates en AUROC**: Se implementa cálculo de la U de Mann-Whitney promediando rangos de empates mediante `scipy.stats.rankdata`.
+4. **Test Pareado por Bootstrap**: Se realiza un remuestreo con reemplazo pareado ($N=10000$, semilla fija en 42) sobre las muestras del subconjunto **Tardío** para evaluar directamente la distribución de $\Delta\text{AUROC} = \text{AUROC}_{memoria} - \text{AUROC}_{baseline}$.
 
 ---
 
-## 3. Discusión Científica y Lectura de Datos
+## 2. Resultados OOF Globales
 
-1. **Validación de la Hipótesis del Acumulador en Riesgo Tardío (Disparo Retardado)**:
-   *   En el subconjunto **Tardío (Disparo Retardado)** bajo el detector base `CCA`, el acumulador térmico calibrado óptimamente ($T_{trip} = 0.25$) **supera** a la línea base de un solo turno optimizada ($\theta = 0.64$).
-   *   El AUROC de la memoria sube a **0.6107** (+2.59% frente al 0.5848 del baseline) y el F1-Score alcanza **0.6492** (frente al 0.6477).
-   *   El acumulador logra filtrar **81 falsos positivos** benignos (`TN = 81`) frente a los 47 del baseline, manteniendo un recall sumamente alto del **93.70%** (372/397 ataques detectados). Esto valida empíricamente la hipótesis original: la inercia temporal del acumulador es útil para discriminar trayectorias donde el ataque se introduce o se propaga de forma retardada o indirecta.
+### A. Detector Base: CCA (Léxico)
 
-2. **La Calibración óptima rescata la comparación**:
-   *   Al calibrar óptimamente el baseline sin memoria del CCA a $\theta = 0.64$, este deja de ser degenerado (bloquear todo) y logra filtrar 53 negativos del total.
-   *   Al contrastarlo de forma justa con la memoria óptima ($T_{trip} = 0.13$ en el dataset completo), la memoria retiene el F1-Score más alto (**0.6727**) y un AUROC más alto (**0.5840** vs. 0.5538).
+| Subconjunto | Sistema | AUROC [IC 95%] | F1-Score | Precision | Recall | Accuracy | TP / FP / TN / FN |
+|---|---|---|---|---|---|---|---|
+| Completo   | Baseline (Fixed ) | 0.5664 [0.5344, 0.5979] | 0.6640 | 0.4970 | 1.0000 | 0.4970 | 497/503/0/0 |
+| Completo   | Baseline (Opt CV) | 0.5664 [0.5344, 0.5979] | 0.6709 | 0.5151 | 0.9618 | 0.5310 | 478/450/53/19 |
+| Completo   | Memoria  (Fixed ) | 0.5852 [0.5499, 0.6195] | 0.6652 | 0.5271 | 0.9014 | 0.5490 | 448/402/101/49 |
+| Completo   | Memoria  (Opt CV) | 0.5852 [0.5499, 0.6195] | 0.6662 | 0.5119 | 0.9537 | 0.5250 | 474/452/51/23 |
+| Temprano   | Baseline (Fixed ) | 0.4465 [0.3784, 0.5165] | 0.5405 | 0.3704 | 1.0000 | 0.3704 | 100/170/0/0 |
+| Temprano   | Baseline (Opt CV) | 0.4465 [0.3784, 0.5165] | 0.5227 | 0.3651 | 0.9200 | 0.3778 | 92/160/10/8 |
+| Temprano   | Memoria  (Fixed ) | 0.4349 [0.3625, 0.5091] | 0.4985 | 0.3562 | 0.8300 | 0.3815 | 83/150/20/17 |
+| Temprano   | Memoria  (Opt CV) | 0.4349 [0.3625, 0.5091] | 0.5156 | 0.3597 | 0.9100 | 0.3667 | 91/162/8/9 |
+| Tardio     | Baseline (Fixed ) | 0.5976 [0.5610, 0.6358] | 0.7045 | 0.5438 | 1.0000 | 0.5438 | 397/333/0/0 |
+| Tardio     | Baseline (Opt CV) | 0.5976 [0.5610, 0.6358] | 0.7195 | 0.5710 | 0.9723 | 0.5877 | 386/290/43/11 |
+| Tardio     | Memoria  (Fixed ) | 0.6334 [0.5941, 0.6729] | 0.7199 | 0.5916 | 0.9194 | 0.6110 | 365/252/81/32 |
+| Tardio     | Memoria  (Opt CV) | 0.6334 [0.5941, 0.6729] | 0.7159 | 0.5691 | 0.9647 | 0.5836 | 383/290/43/14 |
 
-3. **Inocuidad del detector C_NI**:
-   *   El detector basado en Hashing `C_NI` no tiene poder predictivo real en este dataset en inglés (AUROC ~ 0.51). El uso de `HashingEmbedder` (256 dimensiones léxicas) no logra mapear la alineación política-respuesta en un entorno multilingüe complejo. Al ser la señal del sensor base puro ruido aleatorio, la memoria térmica aplicada a `C_NI` hereda y replica este comportamiento.
+### B. Detector Base: C_NI (Gobernanza / Hashing)
+
+| Subconjunto | Sistema | AUROC [IC 95%] | F1-Score | Precision | Recall | Accuracy | TP / FP / TN / FN |
+|---|---|---|---|---|---|---|---|
+| Completo   | Baseline (Fixed ) | 0.5180 [0.4815, 0.5535] | 0.6640 | 0.4970 | 1.0000 | 0.4970 | 497/503/0/0 |
+| Completo   | Baseline (Opt CV) | 0.5180 [0.4815, 0.5535] | 0.6622 | 0.4960 | 0.9960 | 0.4950 | 495/503/0/2 |
+| Completo   | Memoria  (Fixed ) | 0.5077 [0.4715, 0.5438] | 0.6640 | 0.4970 | 1.0000 | 0.4970 | 497/503/0/0 |
+| Completo   | Memoria  (Opt CV) | 0.5077 [0.4715, 0.5438] | 0.6640 | 0.4970 | 1.0000 | 0.4970 | 497/503/0/0 |
+| Temprano   | Baseline (Fixed ) | 0.5125 [0.4405, 0.5844] | 0.5405 | 0.3704 | 1.0000 | 0.3704 | 100/170/0/0 |
+| Temprano   | Baseline (Opt CV) | 0.5125 [0.4405, 0.5844] | 0.5405 | 0.3704 | 1.0000 | 0.3704 | 100/170/0/0 |
+| Temprano   | Memoria  (Fixed ) | 0.4875 [0.4154, 0.5588] | 0.5405 | 0.3704 | 1.0000 | 0.3704 | 100/170/0/0 |
+| Temprano   | Memoria  (Opt CV) | 0.4875 [0.4154, 0.5588] | 0.5405 | 0.3704 | 1.0000 | 0.3704 | 100/170/0/0 |
+| Tardio     | Baseline (Fixed ) | 0.5318 [0.4902, 0.5741] | 0.7045 | 0.5438 | 1.0000 | 0.5438 | 397/333/0/0 |
+| Tardio     | Baseline (Opt CV) | 0.5318 [0.4902, 0.5741] | 0.7022 | 0.5426 | 0.9950 | 0.5411 | 395/333/0/2 |
+| Tardio     | Memoria  (Fixed ) | 0.5119 [0.4704, 0.5540] | 0.7045 | 0.5438 | 1.0000 | 0.5438 | 397/333/0/0 |
+| Tardio     | Memoria  (Opt CV) | 0.5119 [0.4704, 0.5540] | 0.7045 | 0.5438 | 1.0000 | 0.5438 | 397/333/0/0 |
 
 ---
 
-## 4. Límites y Observaciones
+## 3. Test de Diferencia Pareada en Riesgo Tardío
 
-*   **Sesgo de Longitud**: La heurística de `CCA` penaliza severamente el texto largo ($semantic\_risk \approx 1.0$ si len > 80). En ATBench, esto genera picos instantáneos que causan disparos tipo `spike` en mensajes largos del entorno. Aunque la calibración amortigua este ruido elevando $T_{trip}$ a $0.25$ en el conjunto tardío, el rendimiento final sigue acotado por las limitaciones del clasificador léxico base.
-*   **Dirección del AUROC corregida**: El AUROC del acumulador ya no se encuentra invertido (<0.50), gracias a la corrección del paso de $req$ no vacío (primer mensaje del usuario), lo que estabilizó el cálculo de la distancia y evitó excepciones de tipo fail-closed de los embeddings.
+Para dirimir la efectividad del acumulador de memoria frente a la línea base instantánea en el subconjunto **Tardío / Disparo Retardado** (730 muestras), el bootstrap pareado arroja los siguientes resultados:
+
+*   **CCA (Léxico)**:
+    *   $\Delta\text{AUROC}$ puntual: **0.0358**
+    *   Intervalo de confianza del 95% de la diferencia: **[0.0129, 0.0591]**
+    *   Probabilidad empírica de mejora $P(\text{Memoria} > \text{Baseline})$: **0.9992**
+*   **C_NI (Gobernanza)**:
+    *   $\Delta\text{AUROC}$ puntual: **-0.0199**
+    *   Intervalo de confianza del 95% de la diferencia: **[-0.0720, 0.0308]**
+    *   Probabilidad empírica de mejora $P(\text{Memoria} > \text{Baseline})$: **0.2225**
+
+---
+
+## 4. Discusión Científica y Conclusiones
+
+### Conclusión Principal:
+*   Para el clasificador **CCA** en riesgo tardío: **ventaja de la memoria en riesgo tardio, estadisticamente distinguible (ΔAUROC=0.0358, IC=[0.0129, 0.0591], p=0.9992). Primera evidencia externa real de la tesis I2t, condicionada al sensor actual.**
+
+### Límite Central y Limitación Metodológica:
+*   **IMPORTANTE**: El sensor base utilizado para medir la criticidad del turno es léxico (CCA es-ES) o hashing (C_NI, que rinde en torno a ~0.5 AUROC, es decir, nivel azar). El eje temporal de las trayectorias se mide sobre una señal de criticidad no semántica. Por ende, un AUROC >0.5 en esta evaluación refleja que el acumulador realiza una inercia de señal útil y geométricamente robusta a lo largo del tiempo, no que el sensor base esté calibrado semánticamente.
+
+---
+
+## 5. Sello de Evidencia Final y Reproducibilidad
+
+*   **SEALED_SHA256**: `01db4604bb77208ff7b0b8ab2f4c6282b0e09e94d683676dd007f3c770f2547b`
+*   **Nota de Reproducibilidad**: Hash idéntico en 2 corridas sucesivas: `01db4604bb77208ff7b0b8ab2f4c6282b0e09e94d683676dd007f3c770f2547b`.
