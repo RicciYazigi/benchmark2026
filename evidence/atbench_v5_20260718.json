@@ -1,0 +1,598 @@
+{
+ "trace_id": "ATBENCH-V5",
+ "generated_at": "2026-07-18T00:27:01.335912+00:00",
+ "sealed_sha256": "d8acf34e65836a5e9d330a171fb7e8c35021ca35e7eb5dcc639a972f8dc1be6a",
+ "sealed": {
+  "dataset_info": {
+   "name": "ATBench",
+   "path": "data/atbench_test.jsonl",
+   "total_samples": 1000,
+   "positives": 497,
+   "negatives": 503
+  },
+  "cca_detector": {
+   "subsets": {
+    "completo": {
+     "size": 1000,
+     "positives": 497,
+     "negatives": 503,
+     "baseline": {
+      "fixed": {
+       "accuracy": 0.497,
+       "precision": 0.497,
+       "recall": 1.0,
+       "f1": 0.664,
+       "tp": 497,
+       "fp": 503,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5664,
+       "auroc_ci": [
+        0.5344,
+        0.5979
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.531,
+       "precision": 0.5151,
+       "recall": 0.9618,
+       "f1": 0.6709,
+       "tp": 478,
+       "fp": 450,
+       "tn": 53,
+       "fn": 19,
+       "auroc": 0.5664,
+       "auroc_ci": [
+        0.5344,
+        0.5979
+       ]
+      }
+     },
+     "memory": {
+      "fixed": {
+       "accuracy": 0.549,
+       "precision": 0.5271,
+       "recall": 0.9014,
+       "f1": 0.6652,
+       "tp": 448,
+       "fp": 402,
+       "tn": 101,
+       "fn": 49,
+       "auroc": 0.5852,
+       "auroc_ci": [
+        0.5499,
+        0.6195
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.525,
+       "precision": 0.5119,
+       "recall": 0.9537,
+       "f1": 0.6662,
+       "tp": 474,
+       "fp": 452,
+       "tn": 51,
+       "fn": 23,
+       "auroc": 0.5852,
+       "auroc_ci": [
+        0.5499,
+        0.6195
+       ]
+      }
+     }
+    },
+    "temprano": {
+     "size": 270,
+     "positives": 100,
+     "negatives": 170,
+     "baseline": {
+      "fixed": {
+       "accuracy": 0.3704,
+       "precision": 0.3704,
+       "recall": 1.0,
+       "f1": 0.5405,
+       "tp": 100,
+       "fp": 170,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.4253,
+       "auroc_ci": [
+        0.3584,
+        0.4926
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.3704,
+       "precision": 0.3622,
+       "recall": 0.92,
+       "f1": 0.5198,
+       "tp": 92,
+       "fp": 162,
+       "tn": 8,
+       "fn": 8,
+       "auroc": 0.4253,
+       "auroc_ci": [
+        0.3584,
+        0.4926
+       ]
+      }
+     },
+     "memory": {
+      "fixed": {
+       "accuracy": 0.3778,
+       "precision": 0.3547,
+       "recall": 0.83,
+       "f1": 0.497,
+       "tp": 83,
+       "fp": 151,
+       "tn": 19,
+       "fn": 17,
+       "auroc": 0.4179,
+       "auroc_ci": [
+        0.3476,
+        0.4922
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.363,
+       "precision": 0.3583,
+       "recall": 0.91,
+       "f1": 0.5141,
+       "tp": 91,
+       "fp": 163,
+       "tn": 7,
+       "fn": 9,
+       "auroc": 0.4179,
+       "auroc_ci": [
+        0.3476,
+        0.4922
+       ]
+      }
+     }
+    },
+    "tardio": {
+     "size": 730,
+     "positives": 397,
+     "negatives": 333,
+     "baseline": {
+      "fixed": {
+       "accuracy": 0.5438,
+       "precision": 0.5438,
+       "recall": 1.0,
+       "f1": 0.7045,
+       "tp": 397,
+       "fp": 333,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.611,
+       "auroc_ci": [
+        0.5741,
+        0.6483
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.5904,
+       "precision": 0.5727,
+       "recall": 0.9723,
+       "f1": 0.7208,
+       "tp": 386,
+       "fp": 288,
+       "tn": 45,
+       "fn": 11,
+       "auroc": 0.611,
+       "auroc_ci": [
+        0.5741,
+        0.6483
+       ]
+      }
+     },
+     "memory": {
+      "fixed": {
+       "accuracy": 0.6123,
+       "precision": 0.5925,
+       "recall": 0.9194,
+       "f1": 0.7206,
+       "tp": 365,
+       "fp": 251,
+       "tn": 82,
+       "fn": 32,
+       "auroc": 0.6449,
+       "auroc_ci": [
+        0.6049,
+        0.6842
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.5849,
+       "precision": 0.5699,
+       "recall": 0.9647,
+       "f1": 0.7166,
+       "tp": 383,
+       "fp": 289,
+       "tn": 44,
+       "fn": 14,
+       "auroc": 0.6449,
+       "auroc_ci": [
+        0.6049,
+        0.6842
+       ]
+      }
+     }
+    }
+   },
+   "detection_turn_analysis": {
+    "N_coincidences": 448,
+    "mean_turn_memory": 2.83,
+    "mean_turn_baseline": 0.0,
+    "memory_faster_count": 0,
+    "baseline_faster_count": 446,
+    "same_turn_count": 2
+   },
+   "paired_delta_tardio": {
+    "delta_point": 0.0339,
+    "ci": [
+     0.0112,
+     0.0575
+    ],
+    "p_mem_better": 0.9976
+   },
+   "length_ablation": {
+    "length_stats": {
+     "unsafe_tardio": {
+      "mean": 10.0176,
+      "median": 8.0,
+      "std": 8.0629
+     },
+     "benign_tardio": {
+      "mean": 10.992,
+      "median": 10.0,
+      "std": 1.5518
+     }
+    },
+    "auroc_baseline_length": 0.6057,
+    "spearman_rho": {
+     "rho": 0.3851,
+     "pvalue": 3.205255288772187e-27
+    },
+    "terciles": [
+     {
+      "name": "tercil1",
+      "size": 243,
+      "delta_point": 0.0479,
+      "ci": [
+       0.0204,
+       0.0757
+      ],
+      "p_mem_better": 0.9996
+     },
+     {
+      "name": "tercil2",
+      "size": 243,
+      "delta_point": 0.046,
+      "ci": [
+       -0.004,
+       0.0957
+      ],
+      "p_mem_better": 0.9621
+     },
+     {
+      "name": "tercil3",
+      "size": 244,
+      "delta_point": 0.0343,
+      "ci": [
+       -0.0134,
+       0.0809
+      ],
+      "p_mem_better": 0.9232
+     }
+    ],
+    "auroc_mem_norm": 0.5294,
+    "paired_delta_vs_baseline_norm": {
+     "delta_point": -0.0816,
+     "ci": [
+      -0.1218,
+      -0.0408
+     ],
+     "p_mem_better": 0.0
+    }
+   }
+  },
+  "c_ni_detector": {
+   "subsets": {
+    "completo": {
+     "size": 1000,
+     "positives": 497,
+     "negatives": 503,
+     "baseline": {
+      "fixed": {
+       "accuracy": 0.497,
+       "precision": 0.497,
+       "recall": 1.0,
+       "f1": 0.664,
+       "tp": 497,
+       "fp": 503,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.518,
+       "auroc_ci": [
+        0.4815,
+        0.5535
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.495,
+       "precision": 0.496,
+       "recall": 0.996,
+       "f1": 0.6622,
+       "tp": 495,
+       "fp": 503,
+       "tn": 0,
+       "fn": 2,
+       "auroc": 0.518,
+       "auroc_ci": [
+        0.4815,
+        0.5535
+       ]
+      }
+     },
+     "memory": {
+      "fixed": {
+       "accuracy": 0.497,
+       "precision": 0.497,
+       "recall": 1.0,
+       "f1": 0.664,
+       "tp": 497,
+       "fp": 503,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5077,
+       "auroc_ci": [
+        0.4715,
+        0.5438
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.497,
+       "precision": 0.497,
+       "recall": 1.0,
+       "f1": 0.664,
+       "tp": 497,
+       "fp": 503,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5077,
+       "auroc_ci": [
+        0.4715,
+        0.5438
+       ]
+      }
+     }
+    },
+    "temprano": {
+     "size": 270,
+     "positives": 100,
+     "negatives": 170,
+     "baseline": {
+      "fixed": {
+       "accuracy": 0.3704,
+       "precision": 0.3704,
+       "recall": 1.0,
+       "f1": 0.5405,
+       "tp": 100,
+       "fp": 170,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5136,
+       "auroc_ci": [
+        0.4422,
+        0.5835
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.3704,
+       "precision": 0.3704,
+       "recall": 1.0,
+       "f1": 0.5405,
+       "tp": 100,
+       "fp": 170,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5136,
+       "auroc_ci": [
+        0.4422,
+        0.5835
+       ]
+      }
+     },
+     "memory": {
+      "fixed": {
+       "accuracy": 0.3704,
+       "precision": 0.3704,
+       "recall": 1.0,
+       "f1": 0.5405,
+       "tp": 100,
+       "fp": 170,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5069,
+       "auroc_ci": [
+        0.4346,
+        0.5785
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.3704,
+       "precision": 0.3704,
+       "recall": 1.0,
+       "f1": 0.5405,
+       "tp": 100,
+       "fp": 170,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5069,
+       "auroc_ci": [
+        0.4346,
+        0.5785
+       ]
+      }
+     }
+    },
+    "tardio": {
+     "size": 730,
+     "positives": 397,
+     "negatives": 333,
+     "baseline": {
+      "fixed": {
+       "accuracy": 0.5438,
+       "precision": 0.5438,
+       "recall": 1.0,
+       "f1": 0.7045,
+       "tp": 397,
+       "fp": 333,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5316,
+       "auroc_ci": [
+        0.4896,
+        0.5739
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.5411,
+       "precision": 0.5426,
+       "recall": 0.995,
+       "f1": 0.7022,
+       "tp": 395,
+       "fp": 333,
+       "tn": 0,
+       "fn": 2,
+       "auroc": 0.5316,
+       "auroc_ci": [
+        0.4896,
+        0.5739
+       ]
+      }
+     },
+     "memory": {
+      "fixed": {
+       "accuracy": 0.5438,
+       "precision": 0.5438,
+       "recall": 1.0,
+       "f1": 0.7045,
+       "tp": 397,
+       "fp": 333,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5033,
+       "auroc_ci": [
+        0.4621,
+        0.5452
+       ]
+      },
+      "opt_cv": {
+       "accuracy": 0.5438,
+       "precision": 0.5438,
+       "recall": 1.0,
+       "f1": 0.7045,
+       "tp": 397,
+       "fp": 333,
+       "tn": 0,
+       "fn": 0,
+       "auroc": 0.5033,
+       "auroc_ci": [
+        0.4621,
+        0.5452
+       ]
+      }
+     }
+    }
+   },
+   "detection_turn_analysis": {
+    "N_coincidences": 495,
+    "mean_turn_memory": 1.0,
+    "mean_turn_baseline": 0.0,
+    "memory_faster_count": 0,
+    "baseline_faster_count": 495,
+    "same_turn_count": 0
+   },
+   "paired_delta_tardio": {
+    "delta_point": -0.0284,
+    "ci": [
+     -0.0793,
+     0.0232
+    ],
+    "p_mem_better": 0.1368
+   },
+   "length_ablation": {
+    "length_stats": {
+     "unsafe_tardio": {
+      "mean": 10.0176,
+      "median": 8.0,
+      "std": 8.0629
+     },
+     "benign_tardio": {
+      "mean": 10.992,
+      "median": 10.0,
+      "std": 1.5518
+     }
+    },
+    "auroc_baseline_length": 0.6057,
+    "spearman_rho": {
+     "rho": -0.0174,
+     "pvalue": 0.6378832326444974
+    },
+    "terciles": [
+     {
+      "name": "tercil1",
+      "size": 243,
+      "delta_point": -0.0685,
+      "ci": [
+       -0.1504,
+       0.0147
+      ],
+      "p_mem_better": 0.0537
+     },
+     {
+      "name": "tercil2",
+      "size": 243,
+      "delta_point": -0.0603,
+      "ci": [
+       -0.1566,
+       0.0363
+      ],
+      "p_mem_better": 0.1032
+     },
+     {
+      "name": "tercil3",
+      "size": 244,
+      "delta_point": 0.0411,
+      "ci": [
+       -0.0542,
+       0.133
+      ],
+      "p_mem_better": 0.8039
+     }
+    ],
+    "auroc_mem_norm": 0.3933,
+    "paired_delta_vs_baseline_norm": {
+     "delta_point": -0.1383,
+     "ci": [
+      -0.2004,
+      -0.077
+     ],
+     "p_mem_better": 0.0
+    }
+   }
+  }
+ },
+ "latencies_nonsealed": {
+  "cca": {
+   "memory_mean_ms": 0.2413,
+   "baseline_mean_ms": 0.2064
+  },
+  "c_ni": {
+   "memory_mean_ms": 3.1999,
+   "baseline_mean_ms": 25.9936
+  }
+ }
+}
