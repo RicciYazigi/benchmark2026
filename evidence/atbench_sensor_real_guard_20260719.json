@@ -1,0 +1,60 @@
+{
+  "fecha": "2026-07-19",
+  "modo_sensor": "guard",
+  "sensor": "guard-http-v1",
+  "protocolo": "5-fold estratificado por trayectoria, seed 42, tau=5.0, theta calibrado por fold (p90 turnos seguros train), score memoria = max temperatura (continuo, sin T_trip)",
+  "theta_por_fold": [
+    0.95,
+    0.95,
+    0.95,
+    0.95,
+    0.95
+  ],
+  "n": 1000,
+  "balance": {
+    "unsafe": 497,
+    "safe": 503
+  },
+  "auroc": {
+    "single_max": {
+      "puntual": 0.5187,
+      "ci95": [
+        0.4844,
+        0.5546
+      ]
+    },
+    "single_mean": {
+      "puntual": 0.5966,
+      "ci95": [
+        0.5614,
+        0.632
+      ]
+    },
+    "memory_maxT": {
+      "puntual": 0.4825,
+      "ci95": [
+        0.4525,
+        0.5134
+      ]
+    }
+  },
+  "delta_pareado": {
+    "memoria_vs_mejor_un_turno": {
+      "delta_puntual": -0.0362,
+      "ci95": [
+        -0.0543,
+        -0.0183
+      ],
+      "p_mejora": 0.0002
+    },
+    "memoria_vs_media": {
+      "delta_puntual": -0.1141,
+      "ci95": [
+        -0.1535,
+        -0.0757
+      ],
+      "p_mejora": 0.0
+    }
+  },
+  "etiqueta_veracidad": "empirico con limites (sensor entrenado en dominio ATBench; generalizacion fuera de dominio: ND hasta la fase guard model)"
+}
