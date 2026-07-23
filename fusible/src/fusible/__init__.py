@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Ricardo Yazigi
+# SPDX-License-Identifier: Apache-2.0
+
 """fusible — capa de contención temporal, sensor-agnóstica, para sistemas agénticos.
 
 Convierte señales de riesgo por turno (de CUALQUIER detector: Llama Guard,

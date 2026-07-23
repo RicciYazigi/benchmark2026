@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Ricardo Yazigi
+# SPDX-License-Identifier: Apache-2.0
 # -*- coding: utf-8 -*-
 """Flight recorder — la caja negra de vuelo para agentes (línea Art. 72).
 

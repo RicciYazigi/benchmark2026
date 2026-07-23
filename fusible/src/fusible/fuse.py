@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Ricardo Yazigi
+# SPDX-License-Identifier: Apache-2.0
 # -*- coding: utf-8 -*-
 """Fuse — la capa de contención: sensor → normalizador → estadístico → decisión.
 

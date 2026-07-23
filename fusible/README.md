@@ -44,4 +44,4 @@ print(fuse.recorder.summary())
 
 Resultados, protocolo y retractaciones documentadas: `../MEGAFILE_SESION_4R2_20260719.md` y `../AUDITORIA_Y_NORTE_4R2.md`. Estado del gate OOD: `../RESULTADOS_ATBENCH_GUARD.md` (Fase 1.5 en curso).
 
-*Licencia: pendiente de decisión (Apache-2.0 vs BSL). Dirección humana: Richie.*
+*Licencia: Apache License 2.0. Copyright (c) 2026 Ricardo Yazigi.*
