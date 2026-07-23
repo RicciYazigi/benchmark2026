@@ -46,6 +46,25 @@ class QuantileNormalizer:
         return self.transform([score])[0]
 
 
+def robust_reference(cal_scores: Sequence[float], pct: float) -> float:
+    """Percentil de referencia (θ / k_ref) blindado contra sensores degenerados.
+
+    Caso borde real (llama-guard-1b sobre ATBench, 2026-07-20, sellado): un
+    sensor que flaggea ~79% de turnos benignos hace que el percentil caiga
+    EXACTAMENTE sobre el nivel superior normalizado → energía/paso = 0 para
+    todo evento → estadístico muerto (AUROC 0.5000 exacto). Regla: si el
+    percentil alcanza el máximo nivel distinto de la referencia, se devuelve
+    el punto medio entre los dos niveles superiores — el nivel de flag vuelve
+    a aportar energía > 0. Con sensores sanos es idéntico al percentil normal.
+    """
+    arr = np.asarray(cal_scores, dtype=float)
+    ref = float(np.percentile(arr, pct))
+    levels = np.unique(arr)
+    if len(levels) >= 2 and ref >= levels[-1]:
+        ref = float((levels[-1] + levels[-2]) / 2.0)
+    return ref
+
+
 def peak_statistic(scores: Sequence[float], stat_name: str, **kwargs) -> float:
     """Pico del estadístico sobre una trayectoria (score de trayectoria)."""
     st: TripStatistic = make_statistic(stat_name, **{k: v for k, v in kwargs.items()

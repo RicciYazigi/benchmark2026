@@ -11,6 +11,7 @@ from .calibration import (
     QuantileNormalizer,
     calibrate_threshold,
     peak_statistic,
+    robust_reference,
     select_best_statistic,
 )
 from .fuse import Fuse
@@ -27,5 +28,5 @@ __version__ = "0.1.0"
 __all__ = [
     "Fuse", "QuantileNormalizer", "FlightRecorder", "TripEvent", "Observation",
     "I2tStatistic", "CusumStatistic", "EwmaStatistic", "make_statistic",
-    "STATISTICS", "calibrate_threshold", "peak_statistic", "select_best_statistic",
+    "STATISTICS", "calibrate_threshold", "peak_statistic", "select_best_statistic", "robust_reference",
 ]

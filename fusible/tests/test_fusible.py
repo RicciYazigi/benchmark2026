@@ -205,3 +205,22 @@ class TestKalmanSlope:
     def test_en_factory(self):
         from fusible.statistics import make_statistic
         assert make_statistic("kalman_slope").name == "kalman_slope"
+
+
+# ---------------------------------------------------------------------------
+class TestRobustReference:
+    def test_sensor_degenerado_llamaguard(self):
+        """Reproduce el caso sellado 20260720: 78% de benignos en el nivel alto."""
+        from fusible import robust_reference
+        cal = [0.6078] * 784 + [0.1078] * 216   # distribucion real llama-guard normalizada
+        theta = robust_reference(cal, 90)
+        assert theta < 0.6078                    # ya no cae sobre el nivel de flag
+        assert abs(theta - (0.6078 + 0.1078) / 2) < 1e-9
+        # energia por flag vuelve a ser > 0:
+        assert (0.6078 - theta) ** 2 > 0
+
+    def test_sensor_sano_identico_al_percentil(self):
+        from fusible import robust_reference
+        import numpy as np
+        cal = list(np.random.default_rng(7).uniform(0, 1, 5000))
+        assert abs(robust_reference(cal, 90) - float(np.percentile(cal, 90))) < 1e-12
