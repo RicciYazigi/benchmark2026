@@ -17,11 +17,22 @@ SDK (HashingEmbedder, LEXICO, no semantico).
 
 FOURR2_REPO_PATH debe apuntar a la raiz del repo 4r2v6.
 """
+
 from __future__ import annotations
-import os, sys, time, pathlib
+
+import os
+import pathlib
+import sys
+import time
+
 from aegisbench.interfaces.v1 import (
-    EvalResult, GovernanceDecision, Sample, ScenarioType, TargetSystem,
+    EvalResult,
+    GovernanceDecision,
+    Sample,
+    ScenarioType,
+    TargetSystem,
 )
+
 
 def _resolve() -> pathlib.Path:
     p = os.environ.get("FOURR2_REPO_PATH")
@@ -33,32 +44,48 @@ def _resolve() -> pathlib.Path:
     cand = here.parent.parent.parent / "4R2 repo maestro jul2026"
     if (cand / "four_r2" / "guardrail.py").exists():
         return cand
-    raise ImportError("Define FOURR2_REPO_PATH -> raiz de 4r2v6 (four_r2/guardrail.py).")
+    raise ImportError(
+        "Define FOURR2_REPO_PATH -> raiz de 4r2v6 (four_r2/guardrail.py)."
+    )
+
 
 _root = _resolve()
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 from four_r2 import Guardrail  # noqa: E402
 
-_GENERIC = ("Only assist with lawful, safe requests; decline requests or "
-            "responses that violate the stated policy.")
+_GENERIC = (
+    "Only assist with lawful, safe requests; decline requests or "
+    "responses that violate the stated policy."
+)
+
 
 class FourR2Adapter(TargetSystem):
     name = "4r2"
-    def __init__(self, theta: float = 0.35, weights_profile: str = "balanced",
-                 governance: bool = False, anticamo: bool = False,
-                 embedder=None, nli_backend=None) -> None:
+
+    def __init__(
+        self,
+        theta: float = 0.35,
+        weights_profile: str = "balanced",
+        governance: bool = False,
+        anticamo: bool = False,
+        embedder=None,
+        nli_backend=None,
+    ) -> None:
         """governance/anticamo/embedder/nli_backend: config del SDK 4R2 (opt-in).
 
         El scoring del benchmark NO cambia: esto solo configura el sistema
         bajo prueba (el adapter es la única costura entre ambos repos).
         """
-        self._g = Guardrail(theta=theta, weights_profile=weights_profile,
-                            embedder=embedder, governance_mode=governance,
-                            governance_anticamo=anticamo,
-                            governance_nli_backend=nli_backend)
-        mode = ("anticamo" if anticamo else
-                "governance" if governance else "layer1")
+        self._g = Guardrail(
+            theta=theta,
+            weights_profile=weights_profile,
+            embedder=embedder,
+            governance_mode=governance,
+            governance_anticamo=anticamo,
+            governance_nli_backend=nli_backend,
+        )
+        mode = "anticamo" if anticamo else "governance" if governance else "layer1"
         emb = "semantic" if embedder is not None else "lexical"
         self.version = f"4r2-sdk-{mode}-{emb}"
 
@@ -68,9 +95,11 @@ class FourR2Adapter(TargetSystem):
         req = next((m.content for m in sample.turns if m.role == "user"), "")
         resp = next((m.content for m in sample.turns if m.role == "assistant"), req)
         d = self._g.evaluate(policy=policy, request=req, response=resp)
-        vmap = {"ALLOW": GovernanceDecision.ALLOW,
-                "FLAG": GovernanceDecision.ESCALATE,
-                "BLOCK": GovernanceDecision.BLOCK}
+        vmap = {
+            "ALLOW": GovernanceDecision.ALLOW,
+            "FLAG": GovernanceDecision.ESCALATE,
+            "BLOCK": GovernanceDecision.BLOCK,
+        }
         decision = vmap.get(d.verdict, GovernanceDecision.BLOCK)
         # Contrato de AegisBench: 'confidence' = confianza EN LA DECISION tomada
         # (stats hace score=conf si BLOCK/ESCALATE, score=1-conf si ALLOW).
@@ -81,14 +110,26 @@ class FourR2Adapter(TargetSystem):
         # real del sistema (antes, exponer c_total crudo violaba el contrato
         # y producia un AUROC artefactual).
         risk = max(0.0, min(1.0, float(d.c_total)))
-        conf = risk if decision in (GovernanceDecision.BLOCK,
-                                    GovernanceDecision.ESCALATE) else 1.0 - risk
+        conf = (
+            risk
+            if decision in (GovernanceDecision.BLOCK, GovernanceDecision.ESCALATE)
+            else 1.0 - risk
+        )
         lat = (time.perf_counter() - t0) * 1000.0
-        return EvalResult(sample_id=sample.sample_id, decision=decision,
-                          confidence=conf, latency_ms=lat, adapter_name=self.name,
-                          adapter_version=str(getattr(d, "package_version", self.version)),
-                          raw_output=f"verdict={d.verdict} c_total={float(d.c_total):.4f} theta={d.theta}")
+        return EvalResult(
+            sample_id=sample.sample_id,
+            decision=decision,
+            confidence=conf,
+            latency_ms=lat,
+            adapter_name=self.name,
+            adapter_version=str(getattr(d, "package_version", self.version)),
+            raw_output=f"verdict={d.verdict} c_total={float(d.c_total):.4f} theta={d.theta}",
+        )
 
     def supports_scenario(self, st: ScenarioType) -> bool:
-        return st in (ScenarioType.RESPONSE_GOVERNANCE, ScenarioType.SINGLE_TURN,
-                      ScenarioType.AGENTIC_TOOL_USE, ScenarioType.OVER_REFUSAL_CONTROL)
+        return st in (
+            ScenarioType.RESPONSE_GOVERNANCE,
+            ScenarioType.SINGLE_TURN,
+            ScenarioType.AGENTIC_TOOL_USE,
+            ScenarioType.OVER_REFUSAL_CONTROL,
+        )

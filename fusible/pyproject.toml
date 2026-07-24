@@ -8,10 +8,9 @@ version = "0.1.0"
 description = "Capa de contencion temporal sensor-agnostica para sistemas agenticos (I2t / CUSUM / EWMA + calibracion + flight recorder auditable)"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
-authors = [{ name = "Richie / 4R2" }]
+license = "Apache-2.0"
+authors = [{ name = "Ricardo Yazigi" }]
 classifiers = [
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

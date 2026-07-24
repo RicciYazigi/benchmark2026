@@ -145,7 +145,10 @@ def run(
 
     # 1. Instanciar el adaptador
     try:
-        target_system = load_adapter(adapter, **{k: _coerce_param(v) for k, v in (p.split('=', 1) for p in params)})
+        target_system = load_adapter(
+            adapter,
+            **{k: _coerce_param(v) for k, v in (p.split("=", 1) for p in params)},
+        )
     except Exception as e:
         click.secho(f"Error cargando el adaptador: {e}", fg="red", err=True)
         sys.exit(1)
