@@ -1,8 +1,9 @@
 # Paquete de Auditoría Final — Evaluación Independiente para Sonnet
 
 **TRACE_ID:** ARS-20260729-AUD1  
-**Repositorio Canónico de Evidencia:** `https://github.com/RicciYazigi/benchmark2026.git` (Commit `ff989a2`)  
+**Repositorio Canónico de Evidencia:** `https://github.com/RicciYazigi/benchmark2026.git` (Commit `603a403`)  
 **Licencia de la Capa de Contención:** Apache-2.0 (`fuse-ai`)
+
 
 Este documento provee las instrucciones exactas, los hashes SHA-256 sellados y la lista de hallazgos negativos/retractaciones para la validación independiente por parte de Sonnet.
 
