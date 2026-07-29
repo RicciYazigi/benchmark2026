@@ -204,12 +204,17 @@ def main() -> None:
         "ANTES de los datos qwen)",
     }
     print(json.dumps(res, indent=2, ensure_ascii=False))
+    READ_ONLY = os.environ.get("READ_ONLY", "0").lower() in ("1", "true", "yes")
     tag = f"{model.replace(':','_').replace('/','_')}_{NORM}"
     out = HERE / "evidence" / f"atbench_guard_ensemble_{tag}_{date.today().strftime('%Y%m%d')}.json"
     payload = json.dumps(res, indent=2, ensure_ascii=False)
-    out.write_text(payload, encoding="utf-8")
-    out.with_suffix(".sha256").write_text(hashlib.sha256(payload.encode()).hexdigest() + "\n")
-    print(f"\nGuardado: {out}\nSHA-256: {hashlib.sha256(payload.encode()).hexdigest()}")
+    if not READ_ONLY:
+        out.write_text(payload, encoding="utf-8")
+        out.with_suffix(".sha256").write_text(hashlib.sha256(payload.encode()).hexdigest() + "\n")
+        print(f"\nGuardado: {out}\nSHA-256: {hashlib.sha256(payload.encode()).hexdigest()}")
+    else:
+        print(f"\n[READ_ONLY=1] Omitiendo escritura en disco para preservar el hash sellado de evidencia.")
+
 
 
 if __name__ == "__main__":

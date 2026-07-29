@@ -13,12 +13,14 @@ Este documento provee las instrucciones exactas, los hashes SHA-256 sellados y l
 Los scripts leen las inferencias de los modelos de guardrail desde las fuentes cacheadas selladas (`evidence/guard_cache_qwen.json` y `evidence/guard_cache_llama.json`) para garantizar reproductibilidad bit a bit sin depender de una GPU/Ollama local.
 
 ```bash
-# 1. Re-ejecutar Gate OOD sobre Qwen 2.5 3B (Normalización por Cuantiles)
+# 1. Re-ejecutar Gate OOD sobre Qwen 2.5 3B en modo READ_ONLY (no sobrescribe evidencia sellada en disco)
 $env:NORM="quantile"
+$env:READ_ONLY="1"
 python scripts/eval_guard_online.py qwen2.5:3b
 
-# 2. Re-ejecutar Gate OOD sobre Llama Guard 3 1B (Verificación de Degeneración Absorbida)
+# 2. Re-ejecutar Gate OOD sobre Llama Guard 3 1B en modo READ_ONLY
 $env:NORM="quantile"
+$env:READ_ONLY="1"
 python scripts/eval_guard_online.py llama-guard3:1b
 
 # 3. Verificación de la suite de pruebas unitarias de fusible
@@ -32,7 +34,8 @@ py -m pytest tests/ -q
 # Esperado: 60 passed (incluye test_load_atbench con las 1000 muestras completas)
 ```
 
-*Nota sobre saltos en entorno:* Si `sklearn` no está instalado en el entorno de evaluación, pytest omitirá 3 pruebas opcionales de métricas continuas sin comprometer el contrato de evaluación del arnés.
+*Nota sobre modo de lectura:* La variable `$env:READ_ONLY="1"` garantiza que los scripts de evaluación impriman las métricas por pantalla sin modificar los archivos de evidencia sellados en el working tree local.
+
 
 ---
 
