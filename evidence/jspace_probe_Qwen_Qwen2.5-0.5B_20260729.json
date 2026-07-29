@@ -1,0 +1,80 @@
+{
+  "fecha": "2026-07-29",
+  "modelo": "Qwen/Qwen2.5-0.5B",
+  "protocolo": "hidden states ultima capa mean-pool; probe logistico OOF 5-fold por trayectoria (supervision debil); normalizacion por cuantiles; agregadores online; seed 42; hipotesis J1-J3 pre-registradas en el encabezado de este script",
+  "auroc_trayectoria": {
+    "runmax": 0.7609,
+    "runmean": 0.689,
+    "ewma": 0.7126,
+    "cusum": 0.788,
+    "thermal": 0.7657
+  },
+  "deltas": {
+    "cusum_vs_runmax": {
+      "delta_medio": 0.0275,
+      "ci95": [
+        0.0004,
+        0.0567
+      ],
+      "p_mejora": 0.975
+    },
+    "thermal_vs_runmax": {
+      "delta_medio": 0.0051,
+      "ci95": [
+        -0.0075,
+        0.0176
+      ],
+      "p_mejora": 0.78
+    }
+  },
+  "J3_localizacion_inyecciones_environment": {
+    "n": 118,
+    "pct_argmax_en_environment": 0.1271,
+    "azar_base_rate": 0.3391,
+    "referencia_sensor_textual": {
+      "pct": 0.288,
+      "azar": 0.346,
+      "fuente": "exp_diagnostico_turno_20260719"
+    }
+  },
+  "por_familia_cusum_vs_runmax": {
+    "corrupted_tool_feedback": {
+      "cusum": 0.8343,
+      "runmax": 0.7827,
+      "delta": 0.0516
+    },
+    "direct_prompt_injection": {
+      "cusum": 0.6757,
+      "runmax": 0.6569,
+      "delta": 0.0188
+    },
+    "indirect_prompt_injection": {
+      "cusum": 0.795,
+      "runmax": 0.7705,
+      "delta": 0.0245
+    },
+    "inherent_agent_failures": {
+      "cusum": 0.7609,
+      "runmax": 0.7386,
+      "delta": 0.0223
+    },
+    "malicious_tool_execution": {
+      "cusum": 0.8056,
+      "runmax": 0.7688,
+      "delta": 0.0368
+    },
+    "tool_description_injection": {
+      "cusum": 0.7943,
+      "runmax": 0.7677,
+      "delta": 0.0266
+    },
+    "unreliable_or_misinformation": {
+      "cusum": 0.8556,
+      "runmax": 0.8306,
+      "delta": 0.025
+    }
+  },
+  "familias_ganadas": "7/7",
+  "test_signos_p_unilateral": 0.00781,
+  "etiqueta_veracidad": "empirico con limites (probe en-dominio via OOF; activaciones con confounds propios — longitud/tema; comparar J1 contra el AUROC tfidf sellado 0.876)"
+}
