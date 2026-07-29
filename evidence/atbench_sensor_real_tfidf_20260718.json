@@ -1,0 +1,60 @@
+{
+  "fecha": "2026-07-18",
+  "modo_sensor": "tfidf",
+  "sensor": "tfidf-logreg-v1 (supervision debil OOF)",
+  "protocolo": "5-fold estratificado por trayectoria, seed 42, tau=5.0, theta calibrado por fold (p90 turnos seguros train), score memoria = max temperatura (continuo, sin T_trip)",
+  "theta_por_fold": [
+    0.4629,
+    0.453,
+    0.4606,
+    0.4663,
+    0.4598
+  ],
+  "n": 1000,
+  "balance": {
+    "unsafe": 497,
+    "safe": 503
+  },
+  "auroc": {
+    "single_max": {
+      "puntual": 0.855,
+      "ci95": [
+        0.8331,
+        0.8773
+      ]
+    },
+    "single_mean": {
+      "puntual": 0.8986,
+      "ci95": [
+        0.8804,
+        0.9173
+      ]
+    },
+    "memory_maxT": {
+      "puntual": 0.8764,
+      "ci95": [
+        0.8566,
+        0.897
+      ]
+    }
+  },
+  "delta_pareado": {
+    "memoria_vs_mejor_un_turno": {
+      "delta_puntual": 0.0214,
+      "ci95": [
+        0.0134,
+        0.0301
+      ],
+      "p_mejora": 1.0
+    },
+    "memoria_vs_media": {
+      "delta_puntual": -0.0223,
+      "ci95": [
+        -0.0348,
+        -0.0101
+      ],
+      "p_mejora": 0.0005
+    }
+  },
+  "etiqueta_veracidad": "empirico con limites (sensor entrenado en dominio ATBench; generalizacion fuera de dominio: ND hasta la fase guard model)"
+}

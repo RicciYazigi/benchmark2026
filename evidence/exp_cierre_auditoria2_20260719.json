@@ -1,0 +1,112 @@
+{
+  "fecha": "2026-07-19",
+  "contexto": "segunda auditoria Sonnet 5: (1) circularidad tema-reason en P2a, (2) necesidad de evidencia OOD antes del gate guard-model",
+  "EXP1_p2a_deconfundido": {
+    "n_palabras_excluidas_vocab_positivo_sensor": 12728,
+    "original_con_confound": {
+      "n_evaluables": 496,
+      "top1_acierto": 0.252,
+      "top1_azar": 0.1308,
+      "rango_normalizado_medio": 0.7158,
+      "pct_delta_positivo": 0.7419,
+      "pct_argmax_sensor_es_turno_mas_largo": 0.1371,
+      "top1_acierto_cuando_proxy_NO_es_el_mas_largo": 0.2466,
+      "n_proxy_no_es_mas_largo": 442
+    },
+    "deconfundido_sin_vocab_sensor": {
+      "n_evaluables": 482,
+      "top1_acierto": 0.2054,
+      "top1_azar": 0.1303,
+      "rango_normalizado_medio": 0.6704,
+      "pct_delta_positivo": 0.6805,
+      "pct_argmax_sensor_es_turno_mas_largo": 0.1411,
+      "top1_acierto_cuando_proxy_NO_es_el_mas_largo": 0.2061,
+      "n_proxy_no_es_mas_largo": 427
+    },
+    "lectura": "si el des-confundido mantiene top1 >> azar y rango > 0.5, la localizacion no se explica por la circularidad tema-reason señalada"
+  },
+  "EXP2_ood_leave_family_out": {
+    "diseño": "por familia: sensor entrenado sin ninguna trayectoria insegura de esa familia; test = inseguras de la familia + 50% de seguras nunca vistas en train",
+    "por_familia": {
+      "corrupted_tool_feedback": {
+        "n_unsafe_test": 44,
+        "n_safe_test": 252,
+        "auroc_runmax": 0.8765,
+        "auroc_runmean": 0.7888,
+        "auroc_ewma": 0.8342,
+        "auroc_thermal": 0.9033
+      },
+      "direct_prompt_injection": {
+        "n_unsafe_test": 39,
+        "n_safe_test": 252,
+        "auroc_runmax": 0.7488,
+        "auroc_runmean": 0.7158,
+        "auroc_ewma": 0.7344,
+        "auroc_thermal": 0.7753
+      },
+      "indirect_prompt_injection": {
+        "n_unsafe_test": 77,
+        "n_safe_test": 252,
+        "auroc_runmax": 0.8034,
+        "auroc_runmean": 0.7398,
+        "auroc_ewma": 0.791,
+        "auroc_thermal": 0.8482
+      },
+      "inherent_agent_failures": {
+        "n_unsafe_test": 135,
+        "n_safe_test": 252,
+        "auroc_runmax": 0.8479,
+        "auroc_runmean": 0.7428,
+        "auroc_ewma": 0.8078,
+        "auroc_thermal": 0.8749
+      },
+      "malicious_tool_execution": {
+        "n_unsafe_test": 25,
+        "n_safe_test": 252,
+        "auroc_runmax": 0.857,
+        "auroc_runmean": 0.8235,
+        "auroc_ewma": 0.8497,
+        "auroc_thermal": 0.889
+      },
+      "malicious_user_instruction_or_jailbreak": {
+        "n_unsafe_test": 61,
+        "n_safe_test": 252,
+        "auroc_runmax": 0.8379,
+        "auroc_runmean": 0.8265,
+        "auroc_ewma": 0.8593,
+        "auroc_thermal": 0.864
+      },
+      "tool_description_injection": {
+        "n_unsafe_test": 52,
+        "n_safe_test": 252,
+        "auroc_runmax": 0.8062,
+        "auroc_runmean": 0.7814,
+        "auroc_ewma": 0.8132,
+        "auroc_thermal": 0.8578
+      },
+      "unreliable_or_misinformation": {
+        "n_unsafe_test": 64,
+        "n_safe_test": 252,
+        "auroc_runmax": 0.835,
+        "auroc_runmean": 0.7545,
+        "auroc_ewma": 0.79,
+        "auroc_thermal": 0.8524
+      }
+    },
+    "macro_promedio": {
+      "runmax": 0.8266,
+      "runmean": 0.7716,
+      "ewma": 0.8099,
+      "thermal": 0.8581
+    },
+    "delta_pareado_pool_thermal_vs_runmax": {
+      "delta_medio": 0.0344,
+      "ci95": [
+        0.0278,
+        0.0414
+      ],
+      "p_mejora": 1.0
+    }
+  },
+  "etiqueta_veracidad": "empirico con limites (EXP2 es OOD por familia dentro de ATBench; el gate guard-model zero-shot sigue pendiente y obligatorio)"
+}

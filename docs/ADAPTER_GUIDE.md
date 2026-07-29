@@ -1,5 +1,9 @@
 # Guía de Creación de Adaptadores
 
+> [!IMPORTANT]
+> **Alineación con Tesis Congelada (2026-07-27)**
+> AegisBench es el arnés de evaluación independiente de runtime governance (Apache 2.0). Los adaptadores representan sistemas bajo prueba (como `fuse-ai` / `fusible` o clasificadores de terceros).
+
 Esta guía explica detalladamente cómo integrar cualquier sistema de gobernanza de IA (comercial, open-source o local) en AegisBench.
 
 ---

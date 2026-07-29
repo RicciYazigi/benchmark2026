@@ -1,6 +1,6 @@
 {
  "trace_id": "ATBENCH-V5",
- "generated_at": "2026-07-18T00:27:01.335912+00:00",
+ "generated_at": "2026-07-18T00:27:51.354119+00:00",
  "sealed_sha256": "d8acf34e65836a5e9d330a171fb7e8c35021ca35e7eb5dcc639a972f8dc1be6a",
  "sealed": {
   "dataset_info": {
@@ -587,12 +587,12 @@
  },
  "latencies_nonsealed": {
   "cca": {
-   "memory_mean_ms": 0.2413,
-   "baseline_mean_ms": 0.2064
+   "memory_mean_ms": 0.2229,
+   "baseline_mean_ms": 0.1789
   },
   "c_ni": {
-   "memory_mean_ms": 3.1999,
-   "baseline_mean_ms": 25.9936
+   "memory_mean_ms": 3.3717,
+   "baseline_mean_ms": 24.8297
   }
  }
 }

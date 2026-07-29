@@ -1,0 +1,27 @@
+{
+  "fecha": "2026-07-19",
+  "contexto": "auditoria Sonnet 5 (2026-07-19): supervision debil propaga label de trayectoria a turnos benignos; ¿el sensor localiza el riesgo o clasifica el tema?",
+  "P1_fuga_tematica": {
+    "auroc_solo_primeros_1_turnos": 0.7084,
+    "auroc_solo_primeros_2_turnos": 0.6896,
+    "auroc_solo_primeros_3_turnos": 0.7385,
+    "auroc_trayectoria_completa_maxscore": 0.855,
+    "lectura": "fraccion del poder discriminativo disponible ANTES de conducta del agente; alto = fuga tematica domina, bajo = el sensor necesita ver la conducta"
+  },
+  "P2a_localizacion_reason": {
+    "n_trayectorias_evaluables": 496,
+    "top1_acierto_sensor": 0.252,
+    "top1_azar_esperado": 0.1308,
+    "rango_normalizado_medio_turno_riesgo": 0.7158,
+    "rango_esperado_azar": 0.5,
+    "delta_score_turnoriesgo_vs_resto_medio": 0.0858,
+    "pct_trayectorias_con_delta_positivo": 0.7419,
+    "nota": "proxy de turno de riesgo = max Jaccard con `reason`; imperfecto pero independiente del sensor"
+  },
+  "P2b_localizacion_rol_inyecciones": {
+    "n_trayectorias_inyeccion": 198,
+    "pct_argmax_sensor_en_turno_environment": 0.2879,
+    "pct_esperado_por_azar(base_rate_env)": 0.346
+  },
+  "etiqueta_veracidad": "empirico con limites (proxy de turno de riesgo imperfecto; scores OOF sellados previos, sin reentrenamiento)"
+}

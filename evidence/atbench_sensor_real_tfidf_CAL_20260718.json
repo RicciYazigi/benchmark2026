@@ -1,0 +1,75 @@
+{
+  "fecha": "2026-07-18",
+  "sensor": "tfidf-logreg-v1 (supervision debil OOF)",
+  "protocolo": "5-fold estratificado por trayectoria, seed 42; (theta_pct, tau) calibrados por fold SOLO con train (grid 3x4); score memoria = max temperatura continua",
+  "cfg_por_fold_[pct,theta,tau]": [
+    [
+      50.0,
+      0.2764,
+      20.0
+    ],
+    [
+      70.0,
+      0.35,
+      10.0
+    ],
+    [
+      50.0,
+      0.2797,
+      5.0
+    ],
+    [
+      70.0,
+      0.3538,
+      20.0
+    ],
+    [
+      50.0,
+      0.2781,
+      10.0
+    ]
+  ],
+  "n": 1000,
+  "auroc": {
+    "single_max": {
+      "puntual": 0.855,
+      "ci95": [
+        0.8331,
+        0.8773
+      ]
+    },
+    "single_mean": {
+      "puntual": 0.8986,
+      "ci95": [
+        0.8804,
+        0.9173
+      ]
+    },
+    "memory_maxT_cal": {
+      "puntual": 0.8733,
+      "ci95": [
+        0.852,
+        0.8943
+      ]
+    }
+  },
+  "delta_pareado": {
+    "memoria_cal_vs_mejor_un_turno": {
+      "delta_puntual": 0.0183,
+      "ci95": [
+        0.005,
+        0.0322
+      ],
+      "p_mejora": 0.997
+    },
+    "memoria_cal_vs_media": {
+      "delta_puntual": -0.0253,
+      "ci95": [
+        -0.0395,
+        -0.0115
+      ],
+      "p_mejora": 0.0005
+    }
+  },
+  "etiqueta_veracidad": "empirico con limites (sensor en dominio; hiperparametros elegidos con scores in-fold de train, sin tocar test)"
+}

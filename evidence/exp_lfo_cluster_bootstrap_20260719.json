@@ -1,0 +1,27 @@
+{
+  "fecha": "2026-07-19",
+  "contexto": "correccion estadistica LFO (3a auditoria): seguras repetidas 8x en pool -> bootstrap por CLUSTER de trayectoria (cada segura arrastra sus 8 scores) + test de signos",
+  "n_bootstrap": 1000,
+  "deltas_por_familia_thermal_vs_runmax": {
+    "corrupted_tool_feedback": 0.0268,
+    "direct_prompt_injection": 0.0266,
+    "indirect_prompt_injection": 0.0448,
+    "inherent_agent_failures": 0.027,
+    "malicious_tool_execution": 0.0321,
+    "malicious_user_instruction_or_jailbreak": 0.0261,
+    "tool_description_injection": 0.0516,
+    "unreliable_or_misinformation": 0.0174
+  },
+  "familias_ganadas": "8/8",
+  "test_signos_p_unilateral": 0.00391,
+  "bootstrap_cluster_macro_delta": {
+    "delta_medio": 0.0312,
+    "ci95": [
+      0.0198,
+      0.0428
+    ],
+    "p_mejora": 1.0
+  },
+  "nota": "el IC del pool previo [0.0278, 0.0414] queda RETIRADO por invalido (dependencia); este lo reemplaza",
+  "etiqueta_veracidad": "empirico con limites (mismos datos LFO sellados; solo cambia la inferencia)"
+}

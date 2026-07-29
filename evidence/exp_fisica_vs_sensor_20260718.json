@@ -1,0 +1,125 @@
+{
+  "seed": 42,
+  "params": {
+    "theta": 0.35,
+    "tau": 5.0,
+    "T_trip": 0.3
+  },
+  "exp_A_matematica": {
+    "max_abs_error_vs_recurrencia": 0.0,
+    "trip_reset_semantics_ok": true,
+    "veredicto": "demostrable: la implementacion ES la ecuacion declarada"
+  },
+  "exp_B_separacion_pura": {
+    "n_por_clase": 400,
+    "auroc_mejor_detector_un_turno(max_crit)": 0.4743,
+    "auroc_memoria(max_T)": 1.0,
+    "trip_rate_unsafe_params_default": 0.0075,
+    "trip_rate_safe_params_default": 0.0,
+    "nota": "max emparejado entre clases: un turno no puede separar por construccion"
+  },
+  "exp_C_disipacion": {
+    "max_T_denso_dt1": 0.2234,
+    "max_T_espaciado_dt10": 0.0806,
+    "disparo_denso": false,
+    "disparo_espaciado": false,
+    "veredicto": "demostrable: el decaimiento disipa eventos espaciados"
+  },
+  "exp_D_confound_longitud": {
+    "auroc_memoria": 1.0,
+    "auroc_solo_longitud": 0.0,
+    "nota": "si la memoria mantiene AUROC alto con longitudes invertidas, no esta midiendo longitud cuando la señal es limpia"
+  },
+  "exp_E_diagnostico_sensor": {
+    "n_trayectorias": 1000,
+    "n_turnos_totales": 9009,
+    "pct_turnos_keyword_hit": 25.21,
+    "pct_turnos_hit_SOLO_por_subcadena_en_palabra_inglesa": 22.72,
+    "palabras_inglesas_que_disparan_keywords_espanolas_top15": [
+      [
+        "description",
+        702
+      ],
+      [
+        "recipient",
+        229
+      ],
+      [
+        "script",
+        229
+      ],
+      [
+        "snippet",
+        151
+      ],
+      [
+        "confirmation",
+        129
+      ],
+      [
+        "zip",
+        114
+      ],
+      [
+        "wikipedia",
+        105
+      ],
+      [
+        "vip",
+        104
+      ],
+      [
+        "shipping",
+        96
+      ],
+      [
+        "receipt",
+        89
+      ],
+      [
+        "subscription",
+        77
+      ],
+      [
+        "recipients",
+        72
+      ],
+      [
+        "quip",
+        62
+      ],
+      [
+        "shipment",
+        53
+      ],
+      [
+        "multiple",
+        50
+      ]
+    ],
+    "pct_turnos_semantic_risk_saturado_por_longitud": 12.37,
+    "pct_turnos_unclassified": 74.79,
+    "criticality_medio_turnos_en_trayectorias_SEGURAS": 0.6326,
+    "criticality_medio_turnos_en_trayectorias_INSEGURAS": 0.6725,
+    "auroc_max_criticality_un_turno_vs_label": 0.5648,
+    "auroc_mean_criticality_vs_label": 0.6418,
+    "auroc_max_T_memoria_vs_label": 0.592,
+    "auroc_SOLO_numero_de_turnos_vs_label": 0.5091,
+    "corr_spearman_maxT_vs_nturnos": 0.3268
+  },
+  "exp_F_oraculo_estructura_real": {
+    "n": 1000,
+    "auroc_mejor_un_turno(max_crit)": 0.5137,
+    "auroc_memoria(max_T)": 0.9747,
+    "nota": "misma estructura real (longitudes, balance de labels) que la corrida que dio AUROC 0.58 con sensor CCA; unico cambio: señal de criticidad limpia"
+  },
+  "exp_G_sensor_corregido_control": {
+    "descripcion": "CCA lexico con frontera de palabra (sin subcadenas), sin piso unclassified sobre theta",
+    "pct_turnos_keyword_hit_tras_fix": 2.49,
+    "auroc_max_crit_un_turno": 0.5218,
+    "auroc_mean_crit": 0.6665,
+    "auroc_memoria_max_T": 0.5205,
+    "lectura": "al remover el ruido, la senal desaparece: el AUROC 0.585-0.592 previo integraba ruido de subcadenas/piso/longitud, no riesgo",
+    "etiqueta": "empirico con limites (seed 42, corrida unica)"
+  }
+}

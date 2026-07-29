@@ -1,6 +1,13 @@
 # Arquitectura de AegisBench v1.0
 
+> [!IMPORTANT]
+> **BANDEROLA DE ENCUADRE Y TESIS CONGELADA (2026-07-27)**
+> - **Tesis Vigente:** Capa de contención temporal sensor-agnóstica (`fuse-ai` / módulo `fusible`). Acumulación en memoria (CUSUM, $I^2t$, EWMA) sobre trayectorias agénticas.
+> - **Investigación Archivada:** El kernel NRIF geométrico por turno y la clasificación léxica reactiva quedan archivados como génesis intelectual. No se utilizan como clasificadores de un turno ni como producto de detección.
+> - **AegisBench:** Arnés de evaluación y prueba de robustez en tiempo de ejecución (Apache 2.0).
+
 AegisBench está estructurado bajo principios de diseño de software sólido (SOLID), manteniendo un desacoplamiento absoluto entre el framework de evaluación, las muestras de datos y los sistemas de gobernanza bajo prueba (adaptadores).
+
 
 ## Diagrama de Arquitectura de Módulos
 

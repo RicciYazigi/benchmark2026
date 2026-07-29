@@ -1,0 +1,79 @@
+{
+  "fecha": "2026-07-18",
+  "protocolo": "OOF 5-fold por trayectoria, seed 42, sensor tfidf-logreg-v1; estadisticos 100% online (sin conocer el futuro); ewma alpha=0.3; theta=p90 turnos seguros train por fold",
+  "n": 1000,
+  "auroc_online": {
+    "runmax": 0.855,
+    "runmean": 0.7854,
+    "ewma": 0.8348,
+    "thermal_tau5": 0.8764,
+    "thermal_tau2": 0.8684
+  },
+  "deteccion_temprana": {
+    "fpr_5pct": {
+      "runmax": {
+        "umbral": 0.8217,
+        "tpr": 0.4266,
+        "frac_trayectoria_al_detectar_media": 0.6142,
+        "turno_medio_deteccion": 5.27
+      },
+      "runmean": {
+        "umbral": 0.7045,
+        "tpr": 0.2394,
+        "frac_trayectoria_al_detectar_media": 0.2834,
+        "turno_medio_deteccion": 1.36
+      },
+      "ewma": {
+        "umbral": 0.7129,
+        "tpr": 0.3219,
+        "frac_trayectoria_al_detectar_media": 0.4818,
+        "turno_medio_deteccion": 4.53
+      },
+      "thermal_tau5": {
+        "umbral": 0.2097,
+        "tpr": 0.5392,
+        "frac_trayectoria_al_detectar_media": 0.6862,
+        "turno_medio_deteccion": 5.47
+      },
+      "thermal_tau2": {
+        "umbral": 0.1733,
+        "tpr": 0.4769,
+        "frac_trayectoria_al_detectar_media": 0.6584,
+        "turno_medio_deteccion": 5.32
+      }
+    },
+    "fpr_10pct": {
+      "runmax": {
+        "umbral": 0.798,
+        "tpr": 0.5292,
+        "frac_trayectoria_al_detectar_media": 0.6058,
+        "turno_medio_deteccion": 4.83
+      },
+      "runmean": {
+        "umbral": 0.676,
+        "tpr": 0.34,
+        "frac_trayectoria_al_detectar_media": 0.3081,
+        "turno_medio_deteccion": 1.52
+      },
+      "ewma": {
+        "umbral": 0.6776,
+        "tpr": 0.4809,
+        "frac_trayectoria_al_detectar_media": 0.4632,
+        "turno_medio_deteccion": 3.61
+      },
+      "thermal_tau5": {
+        "umbral": 0.1837,
+        "tpr": 0.5996,
+        "frac_trayectoria_al_detectar_media": 0.6701,
+        "turno_medio_deteccion": 5.13
+      },
+      "thermal_tau2": {
+        "umbral": 0.1432,
+        "tpr": 0.5976,
+        "frac_trayectoria_al_detectar_media": 0.6329,
+        "turno_medio_deteccion": 4.85
+      }
+    }
+  },
+  "etiqueta_veracidad": "empirico con limites (sensor en dominio; umbral de operacion elegido sobre el pool global de seguras — igual para todos los metodos)"
+}

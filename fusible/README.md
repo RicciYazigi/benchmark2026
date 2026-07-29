@@ -1,23 +1,31 @@
-# fusible
+# fuse-ai (`fusible`)
 
 **Capa de contención temporal, sensor-agnóstica, para sistemas agénticos.**
 
-Convierte señales de riesgo por turno — de cualquier detector (Llama Guard, LlamaFirewall, probes latentes, un webhook tuyo) — en decisiones de contención en vivo, con calibración automática y un log auditable (flight recorder) apto para monitoreo post-mercado (EU AI Act, Art. 72).
+Convierte señales de riesgo por turno — de cualquier detector (Llama Guard, LlamaFirewall, probes latentes, un webhook propio) — en decisiones de contención en vivo, con calibración automática y un log auditable (*flight recorder*) apto para monitoreo post-mercado (EU AI Act, Art. 72).
 
-Nacido del proyecto 4R2. Los estadísticos de disparo son intercambiables por diseño — I²t (térmico), CUSUM, EWMA — y el default se elige con datos, no por lealtad a una ecuación (`select_best_statistic`).
+Nacido del proyecto 4R2. Los estadísticos de disparo son intercambiables por diseño — $I^2t$ (térmico), CUSUM, EWMA — y la selección de estadísticos se realiza empíricamente con datos de validación (`select_best_statistic`).
 
-## Instalación (desarrollo)
+---
+
+## Instalación
 
 ```bash
-cd fusible && pip install -e ".[dev]" && pytest   # 16 tests, incl. equivalencia numérica con el kernel 4r2v6
+# Desde PyPI (paquete publicado):
+pip install fuse-ai
+
+# Desarrollo local:
+cd fusible && pip install -e ".[dev]" && py -m pytest
 ```
+
+---
 
 ## Quickstart
 
 ```python
 from fusible import Fuse, QuantileNormalizer, calibrate_threshold, select_best_statistic
 
-# 1. Normaliza contra una referencia benigna (resuelve sensores binarios o comprimidos)
+# 1. Normaliza contra una referencia benigna (resuelve sensores binarios, comprimidos o ruidosos)
 qn = QuantileNormalizer().fit(scores_benignos_de_referencia)
 
 # 2. Elige estadístico y umbral con datos de validación
@@ -36,12 +44,26 @@ fuse.recorder.export("informe_monitoreo.json")
 print(fuse.recorder.summary())
 ```
 
-## Qué es cada módulo
+---
 
-`statistics.py` — I2t/CUSUM/EWMA bajo un mismo contrato online (jamás miran el futuro). · `calibration.py` — QuantileNormalizer (benignos → U[0,1] por construcción; θ=0.90 y k_ref=0.75 estables para cualquier sensor), calibración de umbral por FPR objetivo, selección empírica de estadístico. · `fuse.py` — multi-camino, semántica V7.7 (el disparo es solicitud de contención, no BLOCK). · `recorder.py` — flight recorder con exportación sellada.
+## Módulos Principales
 
-## Evidencia
+- `fusible.statistics`: Implementaciones online de $I^2t$, CUSUM y EWMA (contrato estrictamente online sin mirar el futuro).
+- `fusible.calibration`: `QuantileNormalizer` (mapeo a $U[0,1]$ con `robust_reference` para sensores degenerados), calibrador de umbral por FPR y selección empírica de estadístico.
+- `fusible.fuse`: Administrador multi-camino (`Fuse`) con semántica V7.7 (la activación solicita contención, no bloqueo ciego).
+- `fusible.recorder`: Flight recorder con exportación JSON sellada con SHA-256.
 
-Resultados, protocolo y retractaciones documentadas: `../MEGAFILE_SESION_4R2_20260719.md` y `../AUDITORIA_Y_NORTE_4R2.md`. Estado del gate OOD: `../RESULTADOS_ATBENCH_GUARD.md` (Fase 1.5 en curso).
+---
 
-*Licencia: Apache License 2.0. Copyright (c) 2026 Ricardo Yazigi.*
+## Evidencia Empírica y Tesis
+
+- **Tesis Validada:** El riesgo se acumula a lo largo de una trayectoria; la memoria temporal (CUSUM) detecta fallas agénticas donde los detectores reactivos por turno son ciegos.
+- **Resultados Sellados:** En-dominio 8/8 familias ($p=0.0039$), OOD con CUSUM ($IC$ excluye cero).
+- Ver la documentación completa de evidencia en [NORTE_UNA_PAGINA.md](../NORTE_UNA_PAGINA.md) y [ANEXO_DEGENERACION_LLAMAGUARD.md](../ANEXO_DEGENERACION_LLAMAGUARD.md).
+
+---
+
+## Licencia
+
+Código distribuido bajo la licencia **Apache License 2.0**. consulte el archivo [LICENSE](LICENSE) y [NOTICE](NOTICE) para más detalles. Copyright (c) 2026 Ricardo Yazigi.
+

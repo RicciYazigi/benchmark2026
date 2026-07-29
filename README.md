@@ -1,19 +1,24 @@
-# AegisBench v1.0 🛡️
+# AegisBench v1.0 & fuse-ai 🛡️
 
-AegisBench es un benchmark de código abierto, reproducible e independiente para la evaluación y robustez de **Sistemas de Gobernanza de IA en Tiempo de Ejecución (Runtime Governance Systems)**. 
+**AegisBench** es un benchmark de código abierto, reproducible e independiente para la evaluación y robustez de **Sistemas de Gobernanza de IA en Tiempo de Ejecución (Runtime Governance Systems)**.
 
-Estos sistemas monitorean las decisiones y conversaciones de los LLMs/agentes en tiempo real y devuelven una decisión de control: permitir (`ALLOW`), bloquear (`BLOCK`) o escalar a revisión humana (`ESCALATE`).
+Acompaña a **`fuse-ai`** (`fusible`), la **capa de contención temporal sensor-agnóstica** para sistemas agénticos.
+
+> [!NOTE]
+> **Tesis del Proyecto (2026-07-27):**
+> *El riesgo se acumula a lo largo de una trayectoria. Un fusible con memoria (CUSUM, $I^2t$, EWMA) lo detecta donde un detector reactivo por turno es ciego.*
 
 ---
 
 ## 🌟 Características Clave
 
-- **Independencia Absoluta:** El benchmark evalúa a los sistemas como cajas negras, comunicándose únicamente a través de la interfaz común `interfaces/v1.py`. No asume nada de thresholds o estados internos.
-- **Rigor Estadístico:** Cada tasa de éxito de ataque (ASR) o sobrebloqueo (ORR) reportada viene acompañada de un intervalo de confianza del 95% calculado de forma reproducible mediante simulación bootstrap (N=10,000, semilla fija).
-- **Cobertura de Datasets:** Soporte integrado con validación de hashes SHA256 para: JailbreakBench, AdvBench, HarmBench, AgentHarm (bajo licencia protegida) y XSTest (para falsos positivos).
-- **Capa de Ataques Adversariales:** Permite aplicar de forma dinámica transformaciones de ofuscación como codificación Base64, reemplazos Leetspeak, envolturas de juego de rol y cifrado ROT13.
-- **Visualización Premium:** Generación de reportes automáticos en JSON, CSV, Markdown y un panel HTML estático interactivo con gráficos integrados usando Chart.js.
-- **Salvaguarda Anti-Gaming:** Oculta por defecto el 20% de las muestras (split held-out) a través de un algoritmo de hash MD5 determinista para evitar el sobreentrenamiento sobre el benchmark.
+- **Capa de Contención Temporal (`fuse-ai` / `fusible`):** Convierte señales de riesgo por turno de cualquier detector (Llama Guard, probes latentes, webhooks) en decisiones de contención acumulativa con memoria y flight recorder auditable (EU AI Act Art. 72).
+- **Independencia Absoluta:** AegisBench evalúa a los sistemas como cajas negras a través de la interfaz `interfaces/v1.py`.
+- **Rigor Estadístico:** ASR y ORR con intervalos de confianza del 95% mediante simulación bootstrap determinista (N=10,000).
+- **Cobertura de Datasets:** Hash SHA256 para JailbreakBench, AdvBench, HarmBench, AgentHarm y XSTest.
+- **Visualización Premium:** Reportes automáticos en JSON, CSV, Markdown y HTML interactivo con Chart.js.
+- **Salvaguarda Anti-Gaming:** Split held-out del 20% mediante hash MD5 determinista.
+
 
 ---
 
