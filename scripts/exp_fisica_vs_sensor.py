@@ -32,6 +32,7 @@ Experimentos:
 No toca core/ de 4r2v6 (solo lectura via FOURR2_REPO_PATH).
 Etiquetas de veracidad en el JSON de salida: demostrable / empirico / ND.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -97,7 +98,9 @@ def auroc(y_true, y_score) -> float:
 
 def run_accumulator(crits, dts=None) -> dict:
     """Corre una secuencia por un ThermalAccumulator NUEVO. Devuelve max_T y trip."""
-    acc = ThermalAccumulator(params=ThermalParams(tau=TAU, T_trip=T_TRIP, theta_ref=THETA))
+    acc = ThermalAccumulator(
+        params=ThermalParams(tau=TAU, T_trip=T_TRIP, theta_ref=THETA)
+    )
     t = 0.0
     max_T = 0.0
     tripped, trip_turn = False, None
@@ -117,7 +120,9 @@ results: dict = {"seed": SEED, "params": {"theta": THETA, "tau": TAU, "T_trip": 
 # EXP A — Verificacion matematica cerrada (H1)
 # ============================================================================
 print("=" * 70)
-print("EXP A — ¿record() implementa exactamente T_t = T_{t-1}e^(-dt/tau) + max(0,c-theta)^2 ?")
+print(
+    "EXP A — ¿record() implementa exactamente T_t = T_{t-1}e^(-dt/tau) + max(0,c-theta)^2 ?"
+)
 max_err = 0.0
 trip_semantics_ok = True
 for trial in range(200):
@@ -126,7 +131,9 @@ for trial in range(200):
     dts = rng.uniform(0.1, 12.0, n - 1)
     tau_i = float(rng.uniform(0.5, 20.0))
     ttrip_i = float(rng.uniform(0.05, 2.0))
-    acc = ThermalAccumulator(params=ThermalParams(tau=tau_i, T_trip=ttrip_i, theta_ref=THETA))
+    acc = ThermalAccumulator(
+        params=ThermalParams(tau=tau_i, T_trip=ttrip_i, theta_ref=THETA)
+    )
     # referencia independiente (recurrencia a mano, con reset tras disparo)
     T_ref = 0.0
     t = 0.0
@@ -184,7 +191,7 @@ for label in (1, 0):
         tr = make_traj(unsafe=bool(label))
         r = run_accumulator(tr)
         y.append(label)
-        s_single.append(float(tr.max()))   # mejor score de un turno posible
+        s_single.append(float(tr.max()))  # mejor score de un turno posible
         s_mem.append(r["max_T"])
         if label == 1 and r["tripped"]:
             trips_u += 1
@@ -208,7 +215,7 @@ results["exp_B_separacion_pura"] = exp_b
 print("=" * 70)
 print("EXP C — Misma energia total, eventos espaciados: la disipacion debe proteger")
 tr = make_traj(unsafe=True)
-r_denso = run_accumulator(tr)                      # dt = 1 entre turnos
+r_denso = run_accumulator(tr)  # dt = 1 entre turnos
 r_sparse = run_accumulator(tr, dts=[10.0] * (LEN - 1))  # dt = 10
 exp_c = {
     "max_T_denso_dt1": round(r_denso["max_T"], 4),
@@ -261,8 +268,8 @@ def turn_text(m: dict) -> str:
 ACTION_VERBS = ["ejecuta", "borra", "transfiere", "firma", "pago", "desplaza"]
 n_turns_tot = 0
 hit_kw = 0
-hit_only_substring_es = 0   # keyword hit SOLO por subcadena dentro de palabra inglesa
-sat_len = 0                 # semantic_risk saturado por longitud (>= 80 palabras)
+hit_only_substring_es = 0  # keyword hit SOLO por subcadena dentro de palabra inglesa
+sat_len = 0  # semantic_risk saturado por longitud (>= 80 palabras)
 unclassified = 0
 substr_words = Counter()
 crit_by_label = {0: [], 1: []}
@@ -270,7 +277,9 @@ maxcrit_traj, meancrit_traj, ylab, nturns_traj, maxT_traj = [], [], [], [], []
 
 word_re = re.compile(r"[a-z]+")
 for row in rows:
-    contents = row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
+    contents = (
+        row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
+    )
     cca = CCA(session_id=str(row["id"]))
     crits = []
     for m in contents:
@@ -320,11 +329,19 @@ exp_e = {
     "pct_turnos_hit_SOLO_por_subcadena_en_palabra_inglesa": round(
         100 * hit_only_substring_es / n_turns_tot, 2
     ),
-    "palabras_inglesas_que_disparan_keywords_espanolas_top15": substr_words.most_common(15),
-    "pct_turnos_semantic_risk_saturado_por_longitud": round(100 * sat_len / n_turns_tot, 2),
+    "palabras_inglesas_que_disparan_keywords_espanolas_top15": substr_words.most_common(
+        15
+    ),
+    "pct_turnos_semantic_risk_saturado_por_longitud": round(
+        100 * sat_len / n_turns_tot, 2
+    ),
     "pct_turnos_unclassified": round(100 * unclassified / n_turns_tot, 2),
-    "criticality_medio_turnos_en_trayectorias_SEGURAS": round(float(np.mean(crit_by_label[0])), 4),
-    "criticality_medio_turnos_en_trayectorias_INSEGURAS": round(float(np.mean(crit_by_label[1])), 4),
+    "criticality_medio_turnos_en_trayectorias_SEGURAS": round(
+        float(np.mean(crit_by_label[0])), 4
+    ),
+    "criticality_medio_turnos_en_trayectorias_INSEGURAS": round(
+        float(np.mean(crit_by_label[1])), 4
+    ),
     "auroc_max_criticality_un_turno_vs_label": round(auroc(ylab, maxcrit_traj), 4),
     "auroc_mean_criticality_vs_label": round(auroc(ylab, meancrit_traj), 4),
     "auroc_max_T_memoria_vs_label": round(auroc(ylab, maxT_traj), 4),
@@ -354,7 +371,9 @@ print("=" * 70)
 print("EXP F — Longitudes y labels reales de ATBench + señal sintetica limpia")
 y3, s3_single, s3_mem = [], [], []
 for row in rows:
-    contents = row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
+    contents = (
+        row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
+    )
     n = max(2, len(contents))
     label = int(row["label"])
     if label == 1:

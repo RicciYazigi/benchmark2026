@@ -23,6 +23,7 @@ EXP-2  OOD LEAVE-FAMILY-OUT (aproximacion local al gate fuera-de-dominio):
 
 Checkpoints reanudables. core/ intacto. Etiquetas de veracidad en el JSON.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -44,10 +45,12 @@ TAU = 5.0
 
 sys.path.insert(0, str(HERE / "src"))
 
-STOP = set("""the a an and or of to in for on with is are was were be been being this
+STOP = set(
+    """the a an and or of to in for on with is are was were be been being this
 that it as at by from into your you i we they he she their our my me us them
 please can could would should will shall do does did have has had not no if
-then than so but about after before all any""".split())
+then than so but about after before all any""".split()
+)
 
 
 def auroc(y, s) -> float:
@@ -57,7 +60,9 @@ def auroc(y, s) -> float:
 
 
 def content_words(text: str) -> set:
-    return {w for w in re.findall(r"[a-z_]+", text.lower()) if w not in STOP and len(w) > 2}
+    return {
+        w for w in re.findall(r"[a-z_]+", text.lower()) if w not in STOP and len(w) > 2
+    }
 
 
 def turn_text(m: dict) -> str:
@@ -67,17 +72,26 @@ def turn_text(m: dict) -> str:
 
 
 def load_data():
-    rows = [json.loads(line) for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")]
+    rows = [
+        json.loads(line)
+        for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")
+    ]
     data = []
     for row in rows:
-        contents = row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
-        data.append({
-            "label": int(row["label"]),
-            "roles": [m.get("role") for m in contents],
-            "texts": [turn_text(m) for m in contents],
-            "reason": str(row.get("reason") or ""),
-            "risk_source": str(row.get("risk_source") or ""),
-        })
+        contents = (
+            row["contents"][0]
+            if isinstance(row["contents"][0], list)
+            else row["contents"]
+        )
+        data.append(
+            {
+                "label": int(row["label"]),
+                "roles": [m.get("role") for m in contents],
+                "texts": [turn_text(m) for m in contents],
+                "reason": str(row.get("reason") or ""),
+                "risk_source": str(row.get("risk_source") or ""),
+            }
+        )
     return data
 
 
@@ -108,10 +122,18 @@ def exp1(data) -> dict:
     for d in data:
         texts.extend(d["texts"])
         labels.extend([d["label"]] * len(d["texts"]))
-    vec = TfidfVectorizer(ngram_range=(1, 1), max_features=50000, sublinear_tf=True,
-                          min_df=2, strip_accents="unicode", lowercase=True)
+    vec = TfidfVectorizer(
+        ngram_range=(1, 1),
+        max_features=50000,
+        sublinear_tf=True,
+        min_df=2,
+        strip_accents="unicode",
+        lowercase=True,
+    )
     x = vec.fit_transform(texts)
-    clf = LogisticRegression(C=1.0, max_iter=2000, class_weight="balanced", random_state=SEED)
+    clf = LogisticRegression(
+        C=1.0, max_iter=2000, class_weight="balanced", random_state=SEED
+    )
     clf.fit(x, labels)
     vocab = np.array(vec.get_feature_names_out())
     positive_vocab = set(vocab[clf.coef_[0] > 0])
@@ -167,8 +189,14 @@ def exp1(data) -> dict:
             "top1_azar": round(float(np.mean(chance)), 4),
             "rango_normalizado_medio": round(float(np.mean(ranks)), 4),
             "pct_delta_positivo": round(float(np.mean([d > 0 for d in diffs])), 4),
-            "pct_argmax_sensor_es_turno_mas_largo": round(argmax_is_longest / n_eval, 4),
-            "top1_acierto_cuando_proxy_NO_es_el_mas_largo": round(top1_no_longest / n_no_longest, 4) if n_no_longest else None,
+            "pct_argmax_sensor_es_turno_mas_largo": round(
+                argmax_is_longest / n_eval, 4
+            ),
+            "top1_acierto_cuando_proxy_NO_es_el_mas_largo": round(
+                top1_no_longest / n_no_longest, 4
+            )
+            if n_no_longest
+            else None,
             "n_proxy_no_es_mas_largo": n_no_longest,
         }
 
@@ -200,17 +228,28 @@ def exp2(data) -> dict:
         if f.exists():
             block = json.loads(f.read_text(encoding="utf-8"))
         else:
-            test_unsafe = [i for i, d in enumerate(data) if d["label"] == 1 and d["risk_source"] == fam]
-            train_idx = [i for i, d in enumerate(data)
-                         if (d["label"] == 1 and d["risk_source"] != fam) or i in safe_train]
+            test_unsafe = [
+                i
+                for i, d in enumerate(data)
+                if d["label"] == 1 and d["risk_source"] == fam
+            ]
+            train_idx = [
+                i
+                for i, d in enumerate(data)
+                if (d["label"] == 1 and d["risk_source"] != fam) or i in safe_train
+            ]
             sensor = TfidfTurnSensor(seed=SEED)
             tr_texts, tr_labels = [], []
             for i in train_idx:
                 tr_texts.extend(data[i]["texts"])
                 tr_labels.extend([data[i]["label"]] * len(data[i]["texts"]))
             sensor.fit(tr_texts, tr_labels)
-            sst = [s for i in train_idx if data[i]["label"] == 0
-                   for s in sensor.score(data[i]["texts"])]
+            sst = [
+                s
+                for i in train_idx
+                if data[i]["label"] == 0
+                for s in sensor.score(data[i]["texts"])
+            ]
             theta = float(np.percentile(sst, 90))
             block = {"theta": theta, "test": {}}
             for i in test_unsafe + sorted(safe_test):
@@ -227,10 +266,15 @@ def exp2(data) -> dict:
             pool["y"].append(v["y"])
             for m in ("runmax", "runmean", "ewma", "thermal"):
                 pool[m].append(v[m])
-        print(f"LFO {fam}: thermal={res_fam['auroc_thermal']} runmax={res_fam['auroc_runmax']}", flush=True)
+        print(
+            f"LFO {fam}: thermal={res_fam['auroc_thermal']} runmax={res_fam['auroc_runmax']}",
+            flush=True,
+        )
 
-    macro = {m: round(float(np.mean([per_family[f][f"auroc_{m}"] for f in families])), 4)
-             for m in ("runmax", "runmean", "ewma", "thermal")}
+    macro = {
+        m: round(float(np.mean([per_family[f][f"auroc_{m}"] for f in families])), 4)
+        for m in ("runmax", "runmean", "ewma", "thermal")
+    }
     # bootstrap pareado sobre el pool (nota: seguras repetidas entre familias,
     # puntuadas por modelos distintos — comparacion relativa valida, absoluta no)
     y = np.array(pool["y"])
@@ -269,7 +313,11 @@ def main() -> None:
         "ATBench; el gate guard-model zero-shot sigue pendiente y obligatorio)",
     }
     print(json.dumps(res, indent=2, ensure_ascii=False))
-    out = HERE / "evidence" / f"exp_cierre_auditoria2_{date.today().strftime('%Y%m%d')}.json"
+    out = (
+        HERE
+        / "evidence"
+        / f"exp_cierre_auditoria2_{date.today().strftime('%Y%m%d')}.json"
+    )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
     out.write_text(payload, encoding="utf-8")
     sha = hashlib.sha256(payload.encode()).hexdigest()

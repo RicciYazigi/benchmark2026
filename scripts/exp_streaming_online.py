@@ -21,6 +21,7 @@ Metricas:
 Mismo protocolo OOF de siempre (5-fold por trayectoria, seed 42), scores del
 sensor tfidf-logreg-v1. Checkpoints por fold, reanudable. core/ intacto.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -77,11 +78,20 @@ def stage1_scores() -> bool:
 
     from aegisbench.sensors import TfidfTurnSensor
 
-    rows = [json.loads(line) for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")]
+    rows = [
+        json.loads(line)
+        for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")
+    ]
     trajs = []
     for row in rows:
-        contents = row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
-        trajs.append({"label": int(row["label"]), "turns": [turn_text(m) for m in contents]})
+        contents = (
+            row["contents"][0]
+            if isinstance(row["contents"][0], list)
+            else row["contents"]
+        )
+        trajs.append(
+            {"label": int(row["label"]), "turns": [turn_text(m) for m in contents]}
+        )
     labels = np.array([t["label"] for t in trajs])
     CKPT.mkdir(exist_ok=True)
     skf = StratifiedKFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)
@@ -96,8 +106,12 @@ def stage1_scores() -> bool:
             tr_texts.extend(trajs[i]["turns"])
             tr_labels.extend([trajs[i]["label"]] * len(trajs[i]["turns"]))
         sensor.fit(tr_texts, tr_labels)
-        safe_scores = [s for i in tr_idx if trajs[i]["label"] == 0
-                       for s in sensor.score(trajs[i]["turns"])]
+        safe_scores = [
+            s
+            for i in tr_idx
+            if trajs[i]["label"] == 0
+            for s in sensor.score(trajs[i]["turns"])
+        ]
         theta_f = float(np.percentile(safe_scores, 90))
         payload = {"theta": theta_f, "scores": {}, "labels": {}}
         for i in te_idx:
@@ -133,7 +147,7 @@ def main() -> None:
         print("checkpoints incompletos; relanzar", flush=True)
         return
     # cargar todo
-    all_series: dict = {}   # idx -> {"label", stats por metodo}
+    all_series: dict = {}  # idx -> {"label", stats por metodo}
     methods = ["runmax", "runmean", "ewma"] + [f"thermal_tau{t:g}" for t in TAUS]
     for fold in range(N_FOLDS):
         z = json.loads((CKPT / f"scores_fold{fold}.json").read_text(encoding="utf-8"))
@@ -186,13 +200,23 @@ def main() -> None:
             block[m] = {
                 "umbral": round(th, 4),
                 "tpr": round(tp / n_unsafe, 4),
-                "frac_trayectoria_al_detectar_media": round(float(np.mean(det_fracs)), 4) if det_fracs else None,
-                "turno_medio_deteccion": round(float(np.mean(det_turns)), 2) if det_turns else None,
+                "frac_trayectoria_al_detectar_media": round(
+                    float(np.mean(det_fracs)), 4
+                )
+                if det_fracs
+                else None,
+                "turno_medio_deteccion": round(float(np.mean(det_turns)), 2)
+                if det_turns
+                else None,
             }
-        res["deteccion_temprana"][f"fpr_{int(fpr*100)}pct"] = block
+        res["deteccion_temprana"][f"fpr_{int(fpr * 100)}pct"] = block
 
     print(json.dumps(res, indent=2, ensure_ascii=False))
-    out = HERE / "evidence" / f"exp_streaming_online_{date.today().strftime('%Y%m%d')}.json"
+    out = (
+        HERE
+        / "evidence"
+        / f"exp_streaming_online_{date.today().strftime('%Y%m%d')}.json"
+    )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
     out.write_text(payload, encoding="utf-8")
     sha = hashlib.sha256(payload.encode()).hexdigest()

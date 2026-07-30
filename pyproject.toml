@@ -41,10 +41,25 @@ dev = [
 [tool.ruff]
 line-length = 88
 target-version = "py310"
+# fusible/ es un paquete independiente (repo canonico: fuse-ai) con su propio
+# ciclo de lint/tests; aqui vive como snapshot y no lo lintea este CI.
+extend-exclude = ["fusible", "evidence", "reports*", "docker"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
 ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Scripts de experimento: notacion matematica en mayusculas (T, S, K, P, X, C_NI)
+# es la convencion correcta en este dominio, y el ajuste de sys.path debe ocurrir
+# antes de los imports del SDK (E402). Se lintean errores reales, no estilo mate.
+"scripts/*.py" = ["N802", "N803", "N806", "N816", "E402"]
+# Renderers legacy: variables de contexto leidas del JSON que quedan a mano.
+"scripts/render_atbench_v5_semantic.py" = ["N802", "N803", "N806", "E402", "F841"]
+"scripts/eval_atbench_v5_semantic.py" = ["N802", "N803", "N806", "E402", "F841"]
+"adapters_external/*.py" = ["N802", "N803", "N806", "E402"]
+# sklearn expone el hiperparametro de regularizacion como C (mayuscula).
+"src/aegisbench/sensors/turn_sensors.py" = ["N803"]
 
 [tool.mypy]
 python_version = "3.10"

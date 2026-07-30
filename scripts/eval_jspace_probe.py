@@ -27,6 +27,7 @@ Embeddings cacheados en evidence/jspace_embeddings_<modelo>.npz (reanudable).
 Uso:  python scripts/eval_jspace_probe.py            # extrae + evalúa
       python scripts/eval_jspace_probe.py --eval-only  # solo evalúa desde cache
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -60,14 +61,22 @@ def turn_text(m: dict) -> str:
 
 
 def load_trajs():
-    rows = [json.loads(line) for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")]
+    rows = [
+        json.loads(line)
+        for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")
+    ]
     trajs = []
     for r in rows:
         c = r["contents"][0] if isinstance(r["contents"][0], list) else r["contents"]
-        trajs.append({"label": int(r["label"]), "fam": str(r.get("risk_source") or ""),
-                      "roles": [m.get("role") for m in c],
-                      "texts": [turn_text(m) for m in c],
-                      "reason": str(r.get("reason") or "")})
+        trajs.append(
+            {
+                "label": int(r["label"]),
+                "fam": str(r.get("risk_source") or ""),
+                "roles": [m.get("role") for m in c],
+                "texts": [turn_text(m) for m in c],
+                "reason": str(r.get("reason") or ""),
+            }
+        )
     return trajs
 
 
@@ -97,18 +106,26 @@ def extract_embeddings(trajs) -> None:
 
     with torch.no_grad():
         for b in range(0, len(pending), BATCH):
-            batch = pending[b:b + BATCH]
-            enc = tok([x[1][:4000] for x in batch], return_tensors="pt", padding=True,
-                      truncation=True, max_length=MAX_TOKENS_TURN)
+            batch = pending[b : b + BATCH]
+            enc = tok(
+                [x[1][:4000] for x in batch],
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=MAX_TOKENS_TURN,
+            )
             out = model(**enc)
-            hs = out.last_hidden_state                      # (B, T, H)
-            mask = enc["attention_mask"].unsqueeze(-1)      # (B, T, 1)
+            hs = out.last_hidden_state  # (B, T, H)
+            mask = enc["attention_mask"].unsqueeze(-1)  # (B, T, 1)
             pooled = (hs * mask).sum(1) / mask.sum(1).clamp(min=1)
             for (key, _), vec in zip(batch, pooled):
                 done[key] = vec.float().numpy()
             if (b // BATCH) % 20 == 0:
                 np.savez_compressed(EMB_PATH, **done)
-                print(f"[extract] {b + len(batch)}/{len(pending)} (checkpoint)", flush=True)
+                print(
+                    f"[extract] {b + len(batch)}/{len(pending)} (checkpoint)",
+                    flush=True,
+                )
     np.savez_compressed(EMB_PATH, **done)
     print(f"[extract] completo: {len(done)} embeddings → {EMB_PATH.name}", flush=True)
 
@@ -126,7 +143,7 @@ def auc_rank(pos, neg) -> float:
         while j + 1 < len(sv) and sv[j + 1] == sv[i]:
             j += 1
         if j > i:
-            ranks[order[i:j + 1]] = (i + 1 + j + 1) / 2.0
+            ranks[order[i : j + 1]] = (i + 1 + j + 1) / 2.0
         i = j + 1
     u = ranks[: len(pos)].sum() - len(pos) * (len(pos) + 1) / 2.0
     return float(u / (len(pos) * len(neg)))
@@ -143,8 +160,13 @@ def online_peaks(scores, theta, k_ref):
         if k > 0:
             T *= math.exp(-1.0 / TAU)
         T += max(0.0, s - theta) ** 2
-        for name, v in (("runmax", mx), ("runmean", sm / (k + 1)), ("ewma", ew),
-                        ("cusum", S), ("thermal", T)):
+        for name, v in (
+            ("runmax", mx),
+            ("runmean", sm / (k + 1)),
+            ("ewma", ew),
+            ("cusum", S),
+            ("thermal", T),
+        ):
             p[name] = max(p.get(name, -1e9), v)
     return p
 
@@ -163,7 +185,7 @@ def evaluate(trajs) -> None:
     rng = np.random.default_rng(SEED)
 
     # OOF 5-fold por trayectoria: probe logístico con supervisión débil
-    oof_scores = {}   # (i,j) -> score probe
+    oof_scores = {}  # (i,j) -> score probe
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
     for fold, (tr, te) in enumerate(skf.split(np.zeros(len(trajs)), labels)):
         Xtr, ytr = [], []
@@ -172,8 +194,9 @@ def evaluate(trajs) -> None:
                 Xtr.append(emb[f"e_{i}_{j}"])
                 ytr.append(trajs[i]["label"])
         sc = StandardScaler().fit(Xtr)
-        clf = LogisticRegression(max_iter=3000, C=1.0, class_weight="balanced",
-                                 random_state=SEED).fit(sc.transform(Xtr), ytr)
+        clf = LogisticRegression(
+            max_iter=3000, C=1.0, class_weight="balanced", random_state=SEED
+        ).fit(sc.transform(Xtr), ytr)
         for i in te:
             X = sc.transform([emb[f"e_{i}_{j}"] for j in range(len(trajs[i]["texts"]))])
             for j, p in enumerate(clf.predict_proba(X)[:, 1]):
@@ -183,11 +206,14 @@ def evaluate(trajs) -> None:
     # normalización + agregadores (mismo protocolo sellado)
     safe = [i for i, t in enumerate(trajs) if t["label"] == 0]
     rng.shuffle(safe)
-    cal, evl = set(safe[: len(safe) // 2]), sorted(safe[len(safe) // 2:])
-    qn = QuantileNormalizer().fit([oof_scores[(i, j)] for i in cal
-                                   for j in range(len(trajs[i]["texts"]))])
-    series = {i: qn.transform([oof_scores[(i, j)] for j in range(len(trajs[i]["texts"]))])
-              for i in range(len(trajs))}
+    cal, evl = set(safe[: len(safe) // 2]), sorted(safe[len(safe) // 2 :])
+    qn = QuantileNormalizer().fit(
+        [oof_scores[(i, j)] for i in cal for j in range(len(trajs[i]["texts"]))]
+    )
+    series = {
+        i: qn.transform([oof_scores[(i, j)] for j in range(len(trajs[i]["texts"]))])
+        for i in range(len(trajs))
+    }
     cal_n = [s for i in cal for s in series[i]]
     theta, k_ref = float(np.percentile(cal_n, 90)), float(np.percentile(cal_n, 75))
 
@@ -196,7 +222,10 @@ def evaluate(trajs) -> None:
     y = np.array([trajs[i]["label"] for i in eval_idx])
     P = {i: online_peaks(series[i], theta, k_ref) for i in eval_idx}
     methods = ["runmax", "runmean", "ewma", "cusum", "thermal"]
-    auroc = {m: round(float(roc_auc_score(y, [P[i][m] for i in eval_idx])), 4) for m in methods}
+    auroc = {
+        m: round(float(roc_auc_score(y, [P[i][m] for i in eval_idx])), 4)
+        for m in methods
+    }
 
     def boot_delta(a_m, b_m):
         a = np.array([P[i][a_m] for i in eval_idx])
@@ -206,15 +235,23 @@ def evaluate(trajs) -> None:
             idx = rng.integers(0, len(y), len(y))
             if len(np.unique(y[idx])) < 2:
                 continue
-            ds.append(float(roc_auc_score(y[idx], a[idx]) - roc_auc_score(y[idx], b[idx])))
+            ds.append(
+                float(roc_auc_score(y[idx], a[idx]) - roc_auc_score(y[idx], b[idx]))
+            )
         lo, hi = np.percentile(ds, [2.5, 97.5])
-        return {"delta_medio": round(float(np.mean(ds)), 4),
-                "ci95": [round(float(lo), 4), round(float(hi), 4)],
-                "p_mejora": round(float(np.mean(np.array(ds) > 0)), 4)}
+        return {
+            "delta_medio": round(float(np.mean(ds)), 4),
+            "ci95": [round(float(lo), 4), round(float(hi), 4)],
+            "p_mejora": round(float(np.mean(np.array(ds) > 0)), 4),
+        }
 
     # J3 — localización en inyecciones environment (la pregunta del origen)
-    inj = {"indirect_prompt_injection", "tool_description_injection",
-           "corrupted_tool_feedback", "malicious_tool_execution"}
+    inj = {
+        "indirect_prompt_injection",
+        "tool_description_injection",
+        "corrupted_tool_feedback",
+        "malicious_tool_execution",
+    }
     hits, base, n_inj = 0, [], 0
     for i in unsafe:
         t = trajs[i]
@@ -236,9 +273,15 @@ def evaluate(trajs) -> None:
         uf = [i for i in unsafe if trajs[i]["fam"] == f]
         a = auc_rank(np.array([P[i]["cusum"] for i in uf]), s_eval["cusum"])
         b = auc_rank(np.array([P[i]["runmax"] for i in uf]), s_eval["runmax"])
-        per_fam[f] = {"cusum": round(a, 4), "runmax": round(b, 4), "delta": round(a - b, 4)}
+        per_fam[f] = {
+            "cusum": round(a, 4),
+            "runmax": round(b, 4),
+            "delta": round(a - b, 4),
+        }
         wins += a > b
-    p_sign = sum(comb(len(fams), k) for k in range(wins, len(fams) + 1)) / 2 ** len(fams)
+    p_sign = sum(comb(len(fams), k) for k in range(wins, len(fams) + 1)) / 2 ** len(
+        fams
+    )
 
     res = {
         "fecha": str(date.today()),
@@ -247,14 +290,20 @@ def evaluate(trajs) -> None:
         "trayectoria (supervision debil); normalizacion por cuantiles; agregadores online; "
         f"seed {SEED}; hipotesis J1-J3 pre-registradas en el encabezado de este script",
         "auroc_trayectoria": auroc,
-        "deltas": {"cusum_vs_runmax": boot_delta("cusum", "runmax"),
-                   "thermal_vs_runmax": boot_delta("thermal", "runmax")},
+        "deltas": {
+            "cusum_vs_runmax": boot_delta("cusum", "runmax"),
+            "thermal_vs_runmax": boot_delta("thermal", "runmax"),
+        },
         "J3_localizacion_inyecciones_environment": {
             "n": n_inj,
             "pct_argmax_en_environment": round(hits / n_inj, 4) if n_inj else None,
             "azar_base_rate": round(float(np.mean(base)), 4) if base else None,
-            "referencia_sensor_textual": {"pct": 0.288, "azar": 0.346,
-                                          "fuente": "exp_diagnostico_turno_20260719"}},
+            "referencia_sensor_textual": {
+                "pct": 0.288,
+                "azar": 0.346,
+                "fuente": "exp_diagnostico_turno_20260719",
+            },
+        },
         "por_familia_cusum_vs_runmax": per_fam,
         "familias_ganadas": f"{wins}/{len(fams)}",
         "test_signos_p_unilateral": round(p_sign, 5),
@@ -262,10 +311,16 @@ def evaluate(trajs) -> None:
         "con confounds propios — longitud/tema; comparar J1 contra el AUROC tfidf sellado 0.876)",
     }
     print(json.dumps(res, indent=2, ensure_ascii=False))
-    out = HERE / "evidence" / f"jspace_probe_{MODEL.replace('/', '_')}_{date.today().strftime('%Y%m%d')}.json"
+    out = (
+        HERE
+        / "evidence"
+        / f"jspace_probe_{MODEL.replace('/', '_')}_{date.today().strftime('%Y%m%d')}.json"
+    )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
     out.write_text(payload, encoding="utf-8")
-    out.with_suffix(".sha256").write_text(hashlib.sha256(payload.encode()).hexdigest() + "\n")
+    out.with_suffix(".sha256").write_text(
+        hashlib.sha256(payload.encode()).hexdigest() + "\n"
+    )
     print(f"\nGuardado: {out}\nSHA-256: {hashlib.sha256(payload.encode()).hexdigest()}")
 
 

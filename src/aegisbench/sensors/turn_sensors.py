@@ -19,6 +19,7 @@ Implementaciones:
                            (ollama / llama.cpp / vLLM). No requiere red externa
                            si el modelo ya esta descargado en la maquina.
 """
+
 from __future__ import annotations
 
 import json
@@ -32,11 +33,9 @@ class TurnSensor(Protocol):
 
     name: str
 
-    def fit(self, texts: Sequence[str], labels: Sequence[int]) -> "TurnSensor":
-        ...
+    def fit(self, texts: Sequence[str], labels: Sequence[int]) -> "TurnSensor": ...
 
-    def score(self, texts: Sequence[str]) -> List[float]:
-        ...
+    def score(self, texts: Sequence[str]) -> List[float]: ...
 
 
 # ----------------------------------------------------------------------------
@@ -156,15 +155,21 @@ class GuardModelHTTPSensor:
             except (OSError, ValueError):
                 self._cache = {}
 
-    def fit(self, texts: Sequence[str], labels: Sequence[int]) -> "GuardModelHTTPSensor":
+    def fit(
+        self, texts: Sequence[str], labels: Sequence[int]
+    ) -> "GuardModelHTTPSensor":
         return self  # zero-shot
 
     def _ask(self, turn: str) -> float:
         is_llama_guard = "guard" in self.model.lower()
         prompt = turn if is_llama_guard else _GUARD_PROMPT.format(turn=turn[:4000])
         body = json.dumps(
-            {"model": self.model, "prompt": prompt, "stream": False,
-             "options": {"temperature": 0.0, "num_predict": 8}}
+            {
+                "model": self.model,
+                "prompt": prompt,
+                "stream": False,
+                "options": {"temperature": 0.0, "num_predict": 8},
+            }
         ).encode()
         req = urllib.request.Request(
             self.endpoint, data=body, headers={"Content-Type": "application/json"}

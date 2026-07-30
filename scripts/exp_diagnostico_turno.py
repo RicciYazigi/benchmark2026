@@ -20,13 +20,13 @@ Usa los scores OOF por turno ya sellados en evidence/streaming_ckpt/ (mismo
 protocolo 5-fold por trayectoria, seed 42) — cero reentrenamiento, cero fuga
 nueva. Etiquetas de veracidad en el JSON de salida.
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import pathlib
 import re
-from collections import Counter
 from datetime import date
 
 import numpy as np
@@ -34,10 +34,12 @@ import numpy as np
 HERE = pathlib.Path(__file__).resolve().parent.parent
 CKPT = HERE / "evidence" / "streaming_ckpt"
 
-STOP = set("""the a an and or of to in for on with is are was were be been being this
+STOP = set(
+    """the a an and or of to in for on with is are was were be been being this
 that it as at by from into your you i we they he she their our my me us them
 please can could would should will shall do does did have has had not no if
-then than so but about after before all any""".split())
+then than so but about after before all any""".split()
+)
 
 
 def auroc(y, s) -> float:
@@ -47,7 +49,9 @@ def auroc(y, s) -> float:
 
 
 def content_words(text: str) -> set:
-    return {w for w in re.findall(r"[a-z_]+", text.lower()) if w not in STOP and len(w) > 2}
+    return {
+        w for w in re.findall(r"[a-z_]+", text.lower()) if w not in STOP and len(w) > 2
+    }
 
 
 def turn_text(m: dict) -> str:
@@ -57,10 +61,17 @@ def turn_text(m: dict) -> str:
 
 
 def main() -> None:
-    rows = [json.loads(line) for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")]
+    rows = [
+        json.loads(line)
+        for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")
+    ]
     data = {}
     for i, row in enumerate(rows):
-        contents = row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
+        contents = (
+            row["contents"][0]
+            if isinstance(row["contents"][0], list)
+            else row["contents"]
+        )
         data[i] = {
             "label": int(row["label"]),
             "roles": [m.get("role") for m in contents],
@@ -125,15 +136,19 @@ def main() -> None:
         "rango_normalizado_medio_turno_riesgo": round(float(np.mean(ranks)), 4),
         "rango_esperado_azar": 0.5,
         "delta_score_turnoriesgo_vs_resto_medio": round(float(np.mean(diffs)), 4),
-        "pct_trayectorias_con_delta_positivo": round(float(np.mean([d > 0 for d in diffs])), 4),
+        "pct_trayectorias_con_delta_positivo": round(
+            float(np.mean([d > 0 for d in diffs])), 4
+        ),
         "nota": "proxy de turno de riesgo = max Jaccard con `reason`; imperfecto pero "
         "independiente del sensor",
     }
 
     # ---------------- P2b: rol esperado en inyecciones ----------------
     injection_sources = {
-        "indirect_prompt_injection", "tool_description_injection",
-        "corrupted_tool_feedback", "malicious_tool_execution",
+        "indirect_prompt_injection",
+        "tool_description_injection",
+        "corrupted_tool_feedback",
+        "malicious_tool_execution",
     }
     hits_role, base_rate, n_inj = 0, [], 0
     for i in idxs:
@@ -150,8 +165,12 @@ def main() -> None:
             hits_role += 1
     p2b = {
         "n_trayectorias_inyeccion": n_inj,
-        "pct_argmax_sensor_en_turno_environment": round(hits_role / n_inj, 4) if n_inj else None,
-        "pct_esperado_por_azar(base_rate_env)": round(float(np.mean(base_rate)), 4) if base_rate else None,
+        "pct_argmax_sensor_en_turno_environment": round(hits_role / n_inj, 4)
+        if n_inj
+        else None,
+        "pct_esperado_por_azar(base_rate_env)": round(float(np.mean(base_rate)), 4)
+        if base_rate
+        else None,
     }
 
     res = {
@@ -165,7 +184,11 @@ def main() -> None:
         "scores OOF sellados previos, sin reentrenamiento)",
     }
     print(json.dumps(res, indent=2, ensure_ascii=False))
-    out = HERE / "evidence" / f"exp_diagnostico_turno_{date.today().strftime('%Y%m%d')}.json"
+    out = (
+        HERE
+        / "evidence"
+        / f"exp_diagnostico_turno_{date.today().strftime('%Y%m%d')}.json"
+    )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
     out.write_text(payload, encoding="utf-8")
     sha = hashlib.sha256(payload.encode()).hexdigest()

@@ -1,27 +1,32 @@
 # -*- coding: utf-8 -*-
 """Script para renderizar RESULTADOS_ATBENCH_TRAYECTORIA.md autogenerándolo a partir del JSON de evidencia."""
 
-import os
-import json
 import datetime
+import json
+import os
+
 
 def main():
     evidence_dir = "evidence"
-    files = [f for f in os.listdir(evidence_dir) if f.startswith("atbench_trajectory_results_") and f.endswith(".json")]
+    files = [
+        f
+        for f in os.listdir(evidence_dir)
+        if f.startswith("atbench_trajectory_results_") and f.endswith(".json")
+    ]
     if not files:
         print("Error: No se encontraron archivos de evidencia en evidence/.")
         return
-    
+
     files.sort()
     latest_file = os.path.join(evidence_dir, files[-1])
     print(f"Leyendo evidencia desde {latest_file}...")
-    
+
     with open(latest_file, "r", encoding="utf-8") as f:
         report = json.load(f)
 
     sealed_sha256 = report["sealed_sha256"]
     sealed = report["sealed"]
-    
+
     cca = sealed["cca_detector"]
     c_ni = sealed["c_ni_detector"]
 
@@ -119,8 +124,9 @@ Para dirimir la efectividad del acumulador de memoria frente a la línea base in
     report_path = "RESULTADOS_ATBENCH_TRAYECTORIA.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(md_content)
-    
+
     print(f"Reporte reescrito con éxito en {report_path}.")
+
 
 if __name__ == "__main__":
     main()

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests del modulo de sensores por turno (fase sensor real, 2026-07-18)."""
+
 import pathlib
 import sys
 
@@ -14,8 +15,11 @@ class TestLexicalFixedSensor:
     def test_no_dispara_por_subcadena_inglesa(self):
         s = LexicalFixedSensor()
         # Palabras inglesas que rompian al CCA original por subcadena
-        textos = ["the description of the script", "confirmation of shipping receipt",
-                  "wikipedia vip subscription"]
+        textos = [
+            "the description of the script",
+            "confirmation of shipping receipt",
+            "wikipedia vip subscription",
+        ]
         for sc in s.score(textos):
             assert sc < 0.35, "no debe disparar keyword por subcadena"
 
@@ -54,9 +58,13 @@ class TestTfidfTurnSensor:
 class TestIntegracionAcumulador:
     def test_sensor_alimenta_acumulador_sin_cambios(self):
         import os
+
         root = os.environ.get("FOURR2_REPO_PATH")
         if not root:
-            cand = pathlib.Path(__file__).resolve().parent.parent.parent / "4R2 repo maestro jul2026"
+            cand = (
+                pathlib.Path(__file__).resolve().parent.parent.parent
+                / "4R2 repo maestro jul2026"
+            )
             root = str(cand) if cand.exists() else None
         if not root:
             pytest.skip("FOURR2_REPO_PATH no definido")
@@ -64,8 +72,12 @@ class TestIntegracionAcumulador:
         from antigravity_wings.thermal import ThermalAccumulator, ThermalParams
 
         s = LexicalFixedSensor()
-        scores = s.score(["hola", "transfiere el dinero", "transfiere el dinero", "adios"])
-        acc = ThermalAccumulator(params=ThermalParams(tau=5.0, T_trip=1e9, theta_ref=0.35))
+        scores = s.score(
+            ["hola", "transfiere el dinero", "transfiere el dinero", "adios"]
+        )
+        acc = ThermalAccumulator(
+            params=ThermalParams(tau=5.0, T_trip=1e9, theta_ref=0.35)
+        )
         for i, c in enumerate(scores):
             acc.record(criticality=float(c), t=float(i), path="t")
         assert acc.temperature("t") > 0.0

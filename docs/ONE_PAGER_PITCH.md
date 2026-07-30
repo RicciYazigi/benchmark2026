@@ -45,7 +45,9 @@ h = calibrate_threshold(benign_validation_trajectories, "cusum", target_fpr=0.05
 fuse = Fuse(statistic="cusum", normalizer=qn, threshold=h)
 
 for turn_index, turn_score in enumerate(agent_turn_scores):
-    trip = fuse.observe(raw_score=turn_score, t=float(turn_index), path="agent-session-101")
+    trip = fuse.observe(
+        raw_score=turn_score, t=float(turn_index), path="agent-session-101"
+    )
     if trip is not None:
         # Containment trigger: trip.evidence_window pinpoints culprit turns
         orchestrator.contain(trip)

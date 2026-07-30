@@ -1,21 +1,30 @@
 # -*- coding: utf-8 -*-
 """Script para renderizar RESULTADOS_ATBENCH_V5_SEMANTIC.md autogenerándolo a partir del JSON de evidencia semántica."""
 
-import os
-import json
 import datetime
+import json
+import os
 import pathlib
+
 
 def main():
     script_dir = pathlib.Path(__file__).resolve().parent.parent
     evidence_dir = script_dir / "evidence"
-    files = [f for f in os.listdir(evidence_dir) if f.startswith("atbench_v5_semantic_") and f.endswith(".json")]
-    
+    files = [
+        f
+        for f in os.listdir(evidence_dir)
+        if f.startswith("atbench_v5_semantic_") and f.endswith(".json")
+    ]
+
     if not files:
         # Intentar con la ruta alternativa de 4R2 por si las moscas
         alt_dir = script_dir.parent / "4R2 repo maestro jul2026" / "evidence"
         if alt_dir.exists():
-            files_alt = [f for f in os.listdir(alt_dir) if f.startswith("atbench_v5_semantic_") and f.endswith(".json")]
+            files_alt = [
+                f
+                for f in os.listdir(alt_dir)
+                if f.startswith("atbench_v5_semantic_") and f.endswith(".json")
+            ]
             if files_alt:
                 files_alt.sort()
                 latest_file = os.path.join(alt_dir, files_alt[-1])
@@ -28,23 +37,23 @@ def main():
     else:
         files.sort()
         latest_file = os.path.join(evidence_dir, files[-1])
-        
+
     print(f"Leyendo evidencia semántica desde {latest_file}...")
-    
+
     with open(latest_file, "r", encoding="utf-8") as f:
         report = json.load(f)
 
     sealed_sha256 = report["sealed_sha256"]
     sealed = report["sealed"]
-    
+
     cca = sealed["cca_detector"]
     c_ni = sealed["c_ni_detector"]
 
     # FASE 4: ABLACIÓN DE LONGITUD para C_NI (Semántico)
     ab = c_ni["length_ablation"]
     stats = ab["length_stats"]
-    auroc_len = ab["auroc_baseline_length"]
     rho_val = ab["spearman_rho"]["rho"]
+    auroc_len = ab["auroc_baseline_length"]
     terciles = ab["terciles"]
     norm_delta = ab["paired_delta_vs_baseline_norm"]
 
@@ -52,14 +61,14 @@ def main():
     # - Si auroc_longitud ~ auroc_memoria (ambos ~0.63) Y ΔAUROC dentro de terciles ~0 Y el ΔAUROC colapsa al normalizar -> LA VENTAJA ES LONGITUD
     # - Si auroc_longitud cercano a 0.5, ΔAUROC se mantiene >0 dentro de terciles, y sobrevive la normalización -> LA MEMORIA CAPTURA ALGO MÁS
     # - Resultado intermedio
-    
+
     auroc_mem_tardio = c_ni["subsets"]["tardio"]["memory"]["opt_cv"]["auroc"]
-    
+
     # Evaluar condiciones
     c1_longitud = abs(auroc_len - auroc_mem_tardio) < 0.05 and auroc_len > 0.58
     c2_terciles_nulos = all(abs(t["delta_point"]) < 0.015 for t in terciles)
     c3_colapso_norm = norm_delta["delta_point"] <= 0.0 or norm_delta["ci"][1] <= 0.0
-    
+
     c1_semantic = abs(auroc_len - 0.5) < 0.05
     c2_terciles_pos = all(t["delta_point"] > 0.0 and t["ci"][0] > 0.0 for t in terciles)
     c3_sobrevive_norm = norm_delta["delta_point"] > 0.0 and norm_delta["ci"][0] > 0.0
@@ -72,7 +81,9 @@ def main():
     print(f"Delta normalizado: {norm_delta['delta_point']:.4f} (IC={norm_delta['ci']})")
 
     if c1_longitud and c2_terciles_nulos and c3_colapso_norm:
-        conclusion_text = "LA VENTAJA ES LONGITUD. Tesis I²t NO sostenida por estos datos."
+        conclusion_text = (
+            "LA VENTAJA ES LONGITUD. Tesis I²t NO sostenida por estos datos."
+        )
     elif c1_semantic and c2_terciles_pos and c3_sobrevive_norm:
         conclusion_text = "LA MEMORIA CAPTURA ALGO MÁS QUE LONGITUD. Tesis sostenida sobre este sensor."
     else:
@@ -98,7 +109,6 @@ def main():
 
     def format_ablation(det_name, det_data):
         ab = det_data["length_ablation"]
-        stats = ab["length_stats"]
         terciles = ab["terciles"]
         t_lines = []
         for t in terciles:
@@ -106,21 +116,21 @@ def main():
                 f"*   **{t['name'].capitalize()}** (n={t['size']}): $\\Delta\\text{{AUROC}} = {t['delta_point']:.4f}$ con IC 95% = **[{t['ci'][0]:.4f}, {t['ci'][1]:.4f}]** (p = {t['p_mem_better']:.4f})"
             )
         terciles_str = "\n".join(t_lines)
-        
+
         return f"""### Detector Base: {det_name}
 
 *   **A) Estadísticas de Turnos en Tardío**:
-    *   Trayectorias *Unsafe-Tardío*: Media = **{stats['unsafe_tardio']['mean']:.4f}**, Mediana = **{stats['unsafe_tardio']['median']:.4f}**, Desviación Estándar = **{stats['unsafe_tardio']['std']:.4f}**
-    *   Trayectorias *Benign-Tardío*: Media = **{stats['benign_tardio']['mean']:.4f}**, Mediana = **{stats['benign_tardio']['median']:.4f}**, Desviación Estándar = **{stats['benign_tardio']['std']:.4f}**
+    *   Trayectorias *Unsafe-Tardío*: Media = **{stats["unsafe_tardio"]["mean"]:.4f}**, Mediana = **{stats["unsafe_tardio"]["median"]:.4f}**, Desviación Estándar = **{stats["unsafe_tardio"]["std"]:.4f}**
+    *   Trayectorias *Benign-Tardío*: Media = **{stats["benign_tardio"]["mean"]:.4f}**, Mediana = **{stats["benign_tardio"]["median"]:.4f}**, Desviación Estándar = **{stats["benign_tardio"]["std"]:.4f}**
 *   **B) Baseline-solo-longitud**:
-    *   AUROC predictivo del número de turnos en tardío: **{ab['auroc_baseline_length']:.4f}**
+    *   AUROC predictivo del número de turnos en tardío: **{ab["auroc_baseline_length"]:.4f}**
 *   **C) Correlación de Spearman**:
-    *   Coeficiente de correlación $\\rho$ entre temperatura máxima y longitud de turnos en tardío: **{ab['spearman_rho']['rho']:.4f}** ($p$-value = {ab['spearman_rho']['pvalue']})
+    *   Coeficiente de correlación $\\rho$ entre temperatura máxima y longitud de turnos en tardío: **{ab["spearman_rho"]["rho"]:.4f}** ($p$-value = {ab["spearman_rho"]["pvalue"]})
 *   **D) $\\Delta\\text{{AUROC}}$ Pareado Estratificado por Terciles**:
 {terciles_str}
 *   **E) Memoria Normalizada por Longitud**:
-    *   AUROC del acumulador normalizado en tardío: **{ab['auroc_mem_norm']:.4f}**
-    *   $\\Delta\\text{{AUROC}}$ pareado vs Baseline: **{ab['paired_delta_vs_baseline_norm']['delta_point']:.4f}** con IC 95% = **[{ab['paired_delta_vs_baseline_norm']['ci'][0]:.4f}, {ab['paired_delta_vs_baseline_norm']['ci'][1]:.4f}]** (p = {ab['paired_delta_vs_baseline_norm']['p_mem_better']:.4f})"""
+    *   AUROC del acumulador normalizado en tardío: **{ab["auroc_mem_norm"]:.4f}**
+    *   $\\Delta\\text{{AUROC}}$ pareado vs Baseline: **{ab["paired_delta_vs_baseline_norm"]["delta_point"]:.4f}** con IC 95% = **[{ab["paired_delta_vs_baseline_norm"]["ci"][0]:.4f}, {ab["paired_delta_vs_baseline_norm"]["ci"][1]:.4f}]** (p = {ab["paired_delta_vs_baseline_norm"]["p_mem_better"]:.4f})"""
 
     md_content = f"""# Evaluación Semántica No Léxica de Trayectorias (ATBench v5 Semántica)
 
@@ -195,8 +205,9 @@ El bootstrap pareado sobre todo el subconjunto **Tardío** (730 muestras) arroja
     report_path = "RESULTADOS_ATBENCH_V5_SEMANTIC.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(md_content)
-    
+
     print(f"Reporte reescrito con éxito en {report_path}.")
+
 
 if __name__ == "__main__":
     main()

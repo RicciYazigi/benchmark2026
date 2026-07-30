@@ -289,14 +289,20 @@ tardio          | 147   | AUROC=0.5049 F1=0.7048 | AUROC=0.5049 F1=0.6933 (th=0.
 He introducido **aserciones explícitas (`assert`)** en el script de evaluación en caliente [eval_atbench.py](file:///c:/Users/USER/Documents/Benchmark2026/scripts/eval_atbench.py#L193-L201) que verifican por ejecución que la discretización binaria de la predicción óptima (que define las métricas de la matriz de confusión `TP/FP/TN/FN`) sea estrictamente el resultado de aplicar el umbral óptimo sobre la misma variable continua de entrada que recibe el cálculo de AUROC:
 
 ```python
-        # E) Chequeo explícito de variables (AUROC vs. Matriz de confusión)
-        assert len(y_pred_base_opt) == len(held_out_crits_base), "Mismatch de longitud en baseline"
-        for val_bin, val_cont in zip(y_pred_base_opt, held_out_crits_base):
-            assert val_bin == (1 if val_cont >= best_theta else 0), "Mismatch de discretizacion en baseline"
+# E) Chequeo explícito de variables (AUROC vs. Matriz de confusión)
+assert len(y_pred_base_opt) == len(held_out_crits_base), (
+    "Mismatch de longitud en baseline"
+)
+for val_bin, val_cont in zip(y_pred_base_opt, held_out_crits_base):
+    assert val_bin == (1 if val_cont >= best_theta else 0), (
+        "Mismatch de discretizacion en baseline"
+    )
 
-        assert len(y_pred_acc_opt) == len(held_out_temps_acc), "Mismatch de longitud en memoria"
-        for val_bin, val_cont in zip(y_pred_acc_opt, held_out_temps_acc):
-            assert val_bin == (1 if val_cont >= best_ttrip else 0), "Mismatch de discretizacion en memoria"
+assert len(y_pred_acc_opt) == len(held_out_temps_acc), "Mismatch de longitud en memoria"
+for val_bin, val_cont in zip(y_pred_acc_opt, held_out_temps_acc):
+    assert val_bin == (1 if val_cont >= best_ttrip else 0), (
+        "Mismatch de discretizacion en memoria"
+    )
 ```
 
 #### Explicación:

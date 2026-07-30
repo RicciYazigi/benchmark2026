@@ -14,6 +14,7 @@ Propiedades: (a) los benignos quedan ~Uniforme[0,1] POR CONSTRUCCIÓN, así
 sensor; (b) monotónica: no cambia el ranking de un turno, solo la escala;
 (c) barata: un sort en fit, un searchsorted por score.
 """
+
 from __future__ import annotations
 
 from typing import List, Sequence
@@ -49,4 +50,3 @@ class QuantileNormalizer:
 
     def fit_transform(self, benign_scores: Sequence[float]) -> List[float]:
         return self.fit(benign_scores).transform(benign_scores)
-

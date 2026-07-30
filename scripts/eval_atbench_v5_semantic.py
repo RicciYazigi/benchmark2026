@@ -14,10 +14,14 @@ if os.environ.get("ATBENCH_V5_SEMANTIC_CHILD") != "true":
     os.environ["PYTHONHASHSEED"] = "0"
     os.environ["ATBENCH_V5_SEMANTIC_CHILD"] = "true"
     import subprocess
-    result = subprocess.run([sys.executable] + sys.argv, capture_output=False, check=False)
+
+    result = subprocess.run(
+        [sys.executable] + sys.argv, capture_output=False, check=False
+    )
     sys.exit(result.returncode)
 
 import random
+
 import numpy as np
 
 # Fijar semillas para determinismo neural de PyTorch y numpy
@@ -25,6 +29,7 @@ random.seed(42)
 np.random.seed(42)
 try:
     import torch
+
     torch.manual_seed(42)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(42)
@@ -36,8 +41,9 @@ import hashlib
 import json
 import pathlib
 import time
-from scipy.stats import rankdata
+
 import scipy.stats
+from scipy.stats import rankdata
 
 # Configurar sys.path para importar componentes locales
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
@@ -47,40 +53,45 @@ sys.path.insert(
 
 from fourr2_singleturn_baseline_adapter import FourR2SingleTurnBaselineAdapter
 from fourr2_trajectory_adapter import FourR2TrajectoryAdapter
+
 from aegisbench.datasets.atbench_loader import load_atbench
 
 
 def auroc(y_true, y_score):
-    y_true = np.asarray(y_true); y_score = np.asarray(y_score, dtype=float)
-    n_pos = int((y_true == 1).sum()); n_neg = int((y_true == 0).sum())
+    y_true = np.asarray(y_true)
+    y_score = np.asarray(y_score, dtype=float)
+    n_pos = int((y_true == 1).sum())
+    n_neg = int((y_true == 0).sum())
     if n_pos == 0 or n_neg == 0:
         return 0.5
     r = rankdata(y_score)
     return float((r[y_true == 1].sum() - n_pos * (n_pos + 1) / 2.0) / (n_pos * n_neg))
 
 
-def calculate_auroc_bootstrap_ci(y_true, y_score, n_resamples=10000, confidence_level=0.95, seed=42):
+def calculate_auroc_bootstrap_ci(
+    y_true, y_score, n_resamples=10000, confidence_level=0.95, seed=42
+):
     """Calcula el intervalo de confianza bootstrap para el AUROC de manera reproducible."""
     y_true = np.asarray(y_true)
     y_score = np.asarray(y_score)
     rng = np.random.default_rng(seed)
-    
+
     n_samples = len(y_true)
     if n_samples == 0 or len(np.unique(y_true)) < 2:
         return (0.5, 0.5)
-        
+
     bootstrapped_aurocs = []
-    
+
     for _ in range(n_resamples):
         indices = rng.choice(n_samples, size=n_samples, replace=True)
         resampled_y_true = y_true[indices]
         resampled_y_score = y_score[indices]
-        
+
         if len(np.unique(resampled_y_true)) >= 2:
             bootstrapped_aurocs.append(auroc(resampled_y_true, resampled_y_score))
         else:
             bootstrapped_aurocs.append(0.5)
-            
+
     lower_pct = (1.0 - confidence_level) / 2.0 * 100
     upper_pct = (1.0 - (1.0 - confidence_level) / 2.0) * 100
     ci = np.percentile(bootstrapped_aurocs, [lower_pct, upper_pct])
@@ -126,15 +137,20 @@ def parse_tripped_turn(raw_output: str) -> int:
     return -1
 
 
-def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indices_list, tardio_indices_list):
+def run_evaluation_for_mode(
+    mode: str, samples, y_true, fold_of, temprano_indices_list, tardio_indices_list
+):
     """Ejecuta la evaluación OOF, bootstrap pareado y ablación de longitud usando SentenceTransformers."""
     print(f"\n--- Evaluando en MODO: {mode.upper()} ---")
 
     # Instanciar embedder semántico si el modo es c_ni
     emb = None
     if mode == "c_ni":
-        print("Instanciando SentenceTransformerEmbedder (all-MiniLM-L6-v2) para evaluación semántica no léxica...")
+        print(
+            "Instanciando SentenceTransformerEmbedder (all-MiniLM-L6-v2) para evaluación semántica no léxica..."
+        )
         from four_r2.embedders import SentenceTransformerEmbedder
+
         emb = SentenceTransformerEmbedder()
 
     # 1. Instanciar adaptadores
@@ -206,12 +222,12 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
     # 3. OOF Predictions
     for k in range(K):
         dev = [i for i in range(N) if fold_of[i] != k]
-        ho  = [i for i in range(N) if fold_of[i] == k]
+        ho = [i for i in range(N) if fold_of[i] == k]
         best_theta = argmax_F1_base(dev, crits_base, y_true)
         best_ttrip = argmax_F1_mem(dev, temps_acc, y_true)
         for i in ho:
             oof_pred_base[i] = 1 if crits_base[i] >= best_theta else 0
-            oof_pred_mem[i]  = 1 if temps_acc[i]  >= best_ttrip else 0
+            oof_pred_mem[i] = 1 if temps_acc[i] >= best_ttrip else 0
 
     subset_definitions = {
         "completo": list(range(N)),
@@ -232,14 +248,18 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
         y_pred_base_fixed = [1 if crit >= 0.35 else 0 for crit in crits_base_sub]
         metrics_base_fixed = compute_metrics(y_true_sub, y_pred_base_fixed)
         metrics_base_fixed["auroc"] = round(auroc(y_true_sub, crits_base_sub), 4)
-        base_ci_low, base_ci_high = calculate_auroc_bootstrap_ci(y_true_sub, crits_base_sub, n_resamples=10000, seed=42)
+        base_ci_low, base_ci_high = calculate_auroc_bootstrap_ci(
+            y_true_sub, crits_base_sub, n_resamples=10000, seed=42
+        )
         metrics_base_fixed["auroc_ci"] = (round(base_ci_low, 4), round(base_ci_high, 4))
 
         # B) Métricas fijas de Memoria (T_trip = 0.30)
         y_pred_acc_fixed = [1 if temp >= 0.30 else 0 for temp in temps_acc_sub]
         metrics_acc_fixed = compute_metrics(y_true_sub, y_pred_acc_fixed)
         metrics_acc_fixed["auroc"] = round(auroc(y_true_sub, temps_acc_sub), 4)
-        acc_ci_low, acc_ci_high = calculate_auroc_bootstrap_ci(y_true_sub, temps_acc_sub, n_resamples=10000, seed=42)
+        acc_ci_low, acc_ci_high = calculate_auroc_bootstrap_ci(
+            y_true_sub, temps_acc_sub, n_resamples=10000, seed=42
+        )
         metrics_acc_fixed["auroc_ci"] = (round(acc_ci_low, 4), round(acc_ci_high, 4))
 
         # C) Métricas calibradas de Baseline (Out-of-Fold, opt_cv)
@@ -286,7 +306,11 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
 
     # A) Longitud media de turnos: unsafe-tardío vs benign-tardío
     unsafe_tardio_lens = [len(samples[i].turns) for i in tardio_idx if y_true[i] == 1]
-    benign_tardio_lens = [len(samples[i].turns) for i in tardio_idx if samples[i].metadata.get("risk_source") == "benign"]
+    benign_tardio_lens = [
+        len(samples[i].turns)
+        for i in tardio_idx
+        if samples[i].metadata.get("risk_source") == "benign"
+    ]
 
     len_stats = {
         "unsafe_tardio": {
@@ -298,7 +322,7 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
             "mean": round(float(np.mean(benign_tardio_lens)), 4),
             "median": round(float(np.median(benign_tardio_lens)), 4),
             "std": round(float(np.std(benign_tardio_lens)), 4),
-        }
+        },
     }
 
     # B) Baseline-solo-longitud
@@ -306,10 +330,7 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
 
     # C) Spearman(rho)
     rho, pval = scipy.stats.spearmanr(temps_acc_tardio, n_turns_tardio)
-    spearman_rho = {
-        "rho": round(float(rho), 4),
-        "pvalue": float(pval)
-    }
+    spearman_rho = {"rho": round(float(rho), 4), "pvalue": float(pval)}
 
     # D) ΔAUROC pareado ESTRATIFICADO por longitud (3 terciles)
     tardio_with_len = [(i, len(samples[i].turns)) for i in tardio_idx]
@@ -321,15 +342,17 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
     size2 = n_tardio // 3
 
     tercil1 = [x[0] for x in tardio_with_len[:size1]]
-    tercil2 = [x[0] for x in tardio_with_len[size1:size1+size2]]
-    tercil3 = [x[0] for x in tardio_with_len[size1+size2:]]
+    tercil2 = [x[0] for x in tardio_with_len[size1 : size1 + size2]]
+    tercil3 = [x[0] for x in tardio_with_len[size1 + size2 :]]
 
     terciles_results = []
-    for t_idx, t_name in zip([tercil1, tercil2, tercil3], ["tercil1", "tercil2", "tercil3"]):
+    for t_idx, t_name in zip(
+        [tercil1, tercil2, tercil3], ["tercil1", "tercil2", "tercil3"]
+    ):
         yt_t = np.array([y_true[i] for i in t_idx])
         sb_t = np.array([crits_base[i] for i in t_idx])
         sm_t = np.array([temps_acc[i] for i in t_idx])
-        
+
         # Bootstrap pareado en este tercil
         rng_t = np.random.default_rng(42)
         deltas_t = []
@@ -342,17 +365,21 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
         d_point_t = auroc(yt_t, sm_t) - auroc(yt_t, sb_t)
         ci_t = np.percentile(deltas_t, [2.5, 97.5])
         p_better_t = float((deltas_t > 0).mean())
-        
-        terciles_results.append({
-            "name": t_name,
-            "size": len(t_idx),
-            "delta_point": round(float(d_point_t), 4),
-            "ci": [round(float(ci_t[0]), 4), round(float(ci_t[1]), 4)],
-            "p_mem_better": round(float(p_better_t), 4)
-        })
+
+        terciles_results.append(
+            {
+                "name": t_name,
+                "size": len(t_idx),
+                "delta_point": round(float(d_point_t), 4),
+                "ci": [round(float(ci_t[0]), 4), round(float(ci_t[1]), 4)],
+                "p_mem_better": round(float(p_better_t), 4),
+            }
+        )
 
     # E) Memoria normalizada por longitud
-    mem_norm_tardio = np.array([temps_acc[i] / max(1, len(samples[i].turns)) for i in tardio_idx])
+    mem_norm_tardio = np.array(
+        [temps_acc[i] / max(1, len(samples[i].turns)) for i in tardio_idx]
+    )
     auroc_mem_norm = auroc(y_true_tardio, mem_norm_tardio)
 
     # Bootstrap pareado memoria_normalizada vs baseline
@@ -362,9 +389,14 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
         r = rng_norm.integers(0, len(tardio_idx), len(tardio_idx))
         if len(np.unique(y_true_tardio[r])) < 2:
             continue
-        deltas_norm.append(auroc(y_true_tardio[r], mem_norm_tardio[r]) - auroc(y_true_tardio[r], crits_base_tardio[r]))
+        deltas_norm.append(
+            auroc(y_true_tardio[r], mem_norm_tardio[r])
+            - auroc(y_true_tardio[r], crits_base_tardio[r])
+        )
     deltas_norm = np.array(deltas_norm)
-    delta_point_norm = auroc(y_true_tardio, mem_norm_tardio) - auroc(y_true_tardio, crits_base_tardio)
+    delta_point_norm = auroc(y_true_tardio, mem_norm_tardio) - auroc(
+        y_true_tardio, crits_base_tardio
+    )
     ci_norm = np.percentile(deltas_norm, [2.5, 97.5])
     p_better_norm = float((deltas_norm > 0).mean())
 
@@ -377,8 +409,8 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
         "paired_delta_vs_baseline_norm": {
             "delta_point": round(float(delta_point_norm), 4),
             "ci": [round(float(ci_norm[0]), 4), round(float(ci_norm[1]), 4)],
-            "p_mem_better": round(float(p_better_norm), 4)
-        }
+            "p_mem_better": round(float(p_better_norm), 4),
+        },
     }
 
     # 5. Análisis de turnos sobre el conjunto completo usando predicciones OOF (opt_cv)
@@ -402,8 +434,12 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
             "N_coincidences": len(turns_acc),
             "mean_turn_memory": round(float(np.mean(turns_acc)), 2),
             "mean_turn_baseline": round(float(np.mean(turns_base)), 2),
-            "memory_faster_count": sum(1 for a, b in zip(turns_acc, turns_base) if a < b),
-            "baseline_faster_count": sum(1 for a, b in zip(turns_acc, turns_base) if b < a),
+            "memory_faster_count": sum(
+                1 for a, b in zip(turns_acc, turns_base) if a < b
+            ),
+            "baseline_faster_count": sum(
+                1 for a, b in zip(turns_acc, turns_base) if b < a
+            ),
             "same_turn_count": sum(1 for a, b in zip(turns_acc, turns_base) if a == b),
         }
 
@@ -420,13 +456,15 @@ def run_evaluation_for_mode(mode: str, samples, y_true, fold_of, temprano_indice
                 "ci": [round(float(ci[0]), 4), round(float(ci[1]), 4)],
                 "p_mem_better": round(p_mem_better, 4),
             },
-            "length_ablation": length_ablation_metrics
-        }
+            "length_ablation": length_ablation_metrics,
+        },
     }
 
 
 def main():
-    print("Iniciando evaluación de ATBench v5 (Modo Semántico) con Ablación de Longitud...")
+    print(
+        "Iniciando evaluación de ATBench v5 (Modo Semántico) con Ablación de Longitud..."
+    )
     dataset_path = "data/atbench_test.jsonl"
 
     if not os.path.exists(dataset_path):
@@ -494,8 +532,12 @@ def main():
     benign_tardio = benign_pure[1::2]
 
     # 4. Construir temprano y tardío disjuntos
-    temprano_indices_list = sorted(groups["direct_unsafe"] + groups["direct_safe"] + benign_temprano)
-    tardio_indices_list = sorted(groups["indirect_unsafe"] + groups["indirect_safe"] + benign_tardio)
+    temprano_indices_list = sorted(
+        groups["direct_unsafe"] + groups["direct_safe"] + benign_temprano
+    )
+    tardio_indices_list = sorted(
+        groups["indirect_unsafe"] + groups["indirect_safe"] + benign_tardio
+    )
 
     temprano_indices = set(temprano_indices_list)
     tardio_indices = set(tardio_indices_list)
@@ -511,16 +553,22 @@ def main():
         fold_counts[f] += 1
         if y_true[i]:
             fold_positives[f] += 1
-    
+
     print(f"Muestras totales por fold (K=5): {fold_counts}")
     print(f"Positivos por fold: {fold_positives}")
     print(f"Tamano temprano: {len(temprano_indices_list)}")
     print(f"Tamano tardio: {len(tardio_indices_list)}")
 
     # Asserts de Gate 1
-    assert len(temprano_indices.intersection(tardio_indices)) == 0, "Error: Traslape en los índices temprano/tardío."
-    assert len(temprano_indices) + len(tardio_indices) == len(samples), "Error: Pérdida o exceso de muestras al unir temprano/tardío."
-    assert sum(fold_counts) == len(samples), "Error: La suma de pliegues no reconstruye las 1000 muestras."
+    assert len(temprano_indices.intersection(tardio_indices)) == 0, (
+        "Error: Traslape en los índices temprano/tardío."
+    )
+    assert len(temprano_indices) + len(tardio_indices) == len(samples), (
+        "Error: Pérdida o exceso de muestras al unir temprano/tardío."
+    )
+    assert sum(fold_counts) == len(samples), (
+        "Error: La suma de pliegues no reconstruye las 1000 muestras."
+    )
     print("[OK] Asserts de Fase 1 pasados exitosamente.")
 
     # Ejecutar para modo 'cca' y 'c_ni'
@@ -534,10 +582,14 @@ def main():
     # --- CHEQUEO DE CORDURA ARITMÉTICO EXPLÍCITO ---
     for det_name, results in [("cca", results_cca), ("c_ni", results_c_ni)]:
         subsets = results["sealed_metrics"]["subsets"]
-        
+
         # A) No traslape ni pérdida de índices en la definición
-        assert len(temprano_indices.intersection(tardio_indices)) == 0, f"[{det_name}] Error: Traslape en los índices temprano/tardío."
-        assert len(temprano_indices) + len(tardio_indices) == len(samples), f"[{det_name}] Error: Pérdida o exceso de muestras al unir temprano/tardío."
+        assert len(temprano_indices.intersection(tardio_indices)) == 0, (
+            f"[{det_name}] Error: Traslape en los índices temprano/tardío."
+        )
+        assert len(temprano_indices) + len(tardio_indices) == len(samples), (
+            f"[{det_name}] Error: Pérdida o exceso de muestras al unir temprano/tardío."
+        )
 
         # B) Consistencia de tamaños
         total_size = subsets["completo"]["size"]
@@ -552,20 +604,37 @@ def main():
         tardio_pos = subsets["tardio"]["positives"]
         tardio_neg = subsets["tardio"]["negatives"]
 
-        assert temprano_size + tardio_size == total_size, f"[{det_name}] Error: Los tamaños de temprano y tardío no reconstruyen el total."
-        assert temprano_pos + tardio_pos == pos_total, f"[{det_name}] Error: La suma de positivos en temprano y tardío no reconstruye los positivos totales."
-        assert temprano_neg + tardio_neg == neg_total, f"[{det_name}] Error: La suma de negativos en temprano y tardío no reconstruye los negativos totales."
-        
+        assert temprano_size + tardio_size == total_size, (
+            f"[{det_name}] Error: Los tamaños de temprano y tardío no reconstruyen el total."
+        )
+        assert temprano_pos + tardio_pos == pos_total, (
+            f"[{det_name}] Error: La suma de positivos en temprano y tardío no reconstruye los positivos totales."
+        )
+        assert temprano_neg + tardio_neg == neg_total, (
+            f"[{det_name}] Error: La suma de negativos en temprano y tardío no reconstruye los negativos totales."
+        )
+
         # C) Consistencia interna de la matriz de confusión para cada configuración
         for sys_name in ["baseline", "memory"]:
             for config in ["fixed", "opt_cv"]:
                 for sub_name in ["completo", "temprano", "tardio"]:
                     m = subsets[sub_name][sys_name][config]
-                    assert m["tp"] + m["fn"] == subsets[sub_name]["positives"], f"[{det_name}][{sys_name}][{config}][{sub_name}] Inconsistencia: TP+FN != positives"
-                    assert m["fp"] + m["tn"] == subsets[sub_name]["negatives"], f"[{det_name}][{sys_name}][{config}][{sub_name}] Inconsistencia: FP+TN != negatives"
-                    assert m["tp"] + m["fp"] + m["tn"] + m["fn"] == subsets[sub_name]["size"], f"[{det_name}][{sys_name}][{config}][{sub_name}] Inconsistencia: TP+FP+TN+FN != size"
+                    assert m["tp"] + m["fn"] == subsets[sub_name]["positives"], (
+                        f"[{det_name}][{sys_name}][{config}][{sub_name}] Inconsistencia: TP+FN != positives"
+                    )
+                    assert m["fp"] + m["tn"] == subsets[sub_name]["negatives"], (
+                        f"[{det_name}][{sys_name}][{config}][{sub_name}] Inconsistencia: FP+TN != negatives"
+                    )
+                    assert (
+                        m["tp"] + m["fp"] + m["tn"] + m["fn"]
+                        == subsets[sub_name]["size"]
+                    ), (
+                        f"[{det_name}][{sys_name}][{config}][{sub_name}] Inconsistencia: TP+FP+TN+FN != size"
+                    )
 
-    print("\n[OK] CHEQUEO DE CORDURA ARITMETICO COMPLETADO CON EXITO: Todos los subconjuntos reconstruyen el total sin traslapes ni perdidas.")
+    print(
+        "\n[OK] CHEQUEO DE CORDURA ARITMETICO COMPLETADO CON EXITO: Todos los subconjuntos reconstruyen el total sin traslapes ni perdidas."
+    )
 
     # Estructura del payload sellado (sin latencias ni timestamps)
     sealed = {
@@ -593,7 +662,7 @@ def main():
         "latencies_nonsealed": {
             "cca": results_cca["latencies"],
             "c_ni": results_c_ni["latencies"],
-        }
+        },
     }
 
     # Guardar reporte de evidencia con sellado SHA-256
@@ -622,18 +691,18 @@ def render_report(report, out_file_json):
 
     ab = c_ni["length_ablation"]
     stats = ab["length_stats"]
-    auroc_len = ab["auroc_baseline_length"]
     rho_val = ab["spearman_rho"]["rho"]
+    auroc_len = ab["auroc_baseline_length"]
     terciles = ab["terciles"]
     norm_delta = ab["paired_delta_vs_baseline_norm"]
 
     auroc_mem_tardio = c_ni["subsets"]["tardio"]["memory"]["opt_cv"]["auroc"]
-    
+
     # Evaluar condiciones
     c1_longitud = abs(auroc_len - auroc_mem_tardio) < 0.05 and auroc_len > 0.58
     c2_terciles_nulos = all(abs(t["delta_point"]) < 0.015 for t in terciles)
     c3_colapso_norm = norm_delta["delta_point"] <= 0.0 or norm_delta["ci"][1] <= 0.0
-    
+
     c1_semantic = abs(auroc_len - 0.5) < 0.05
     c2_terciles_pos = all(t["delta_point"] > 0.0 and t["ci"][0] > 0.0 for t in terciles)
     c3_sobrevive_norm = norm_delta["delta_point"] > 0.0 and norm_delta["ci"][0] > 0.0
@@ -646,7 +715,9 @@ def render_report(report, out_file_json):
     print(f"Delta normalizado: {norm_delta['delta_point']:.4f} (IC={norm_delta['ci']})")
 
     if c1_longitud and c2_terciles_nulos and c3_colapso_norm:
-        conclusion_text = "LA VENTAJA ES LONGITUD. Tesis I²t NO sostenida por estos datos."
+        conclusion_text = (
+            "LA VENTAJA ES LONGITUD. Tesis I²t NO sostenida por estos datos."
+        )
     elif c1_semantic and c2_terciles_pos and c3_sobrevive_norm:
         conclusion_text = "LA MEMORIA CAPTURA ALGO MÁS QUE LONGITUD. Tesis sostenida sobre este sensor."
     else:
@@ -672,7 +743,6 @@ def render_report(report, out_file_json):
 
     def format_ablation(det_name, det_data):
         ab = det_data["length_ablation"]
-        stats = ab["length_stats"]
         terciles = ab["terciles"]
         t_lines = []
         for t in terciles:
@@ -680,21 +750,21 @@ def render_report(report, out_file_json):
                 f"*   **{t['name'].capitalize()}** (n={t['size']}): $\\Delta\\text{{AUROC}} = {t['delta_point']:.4f}$ con IC 95% = **[{t['ci'][0]:.4f}, {t['ci'][1]:.4f}]** (p = {t['p_mem_better']:.4f})"
             )
         terciles_str = "\n".join(t_lines)
-        
+
         return f"""### Detector Base: {det_name}
 
 *   **A) Estadísticas de Turnos en Tardío**:
-    *   Trayectorias *Unsafe-Tardío*: Media = **{stats['unsafe_tardio']['mean']:.4f}**, Mediana = **{stats['unsafe_tardio']['median']:.4f}**, Desviación Estándar = **{stats['unsafe_tardio']['std']:.4f}**
-    *   Trayectorias *Benign-Tardío*: Media = **{stats['benign_tardio']['mean']:.4f}**, Mediana = **{stats['benign_tardio']['median']:.4f}**, Desviación Estándar = **{stats['benign_tardio']['std']:.4f}**
+    *   Trayectorias *Unsafe-Tardío*: Media = **{stats["unsafe_tardio"]["mean"]:.4f}**, Mediana = **{stats["unsafe_tardio"]["median"]:.4f}**, Desviación Estándar = **{stats["unsafe_tardio"]["std"]:.4f}**
+    *   Trayectorias *Benign-Tardío*: Media = **{stats["benign_tardio"]["mean"]:.4f}**, Mediana = **{stats["benign_tardio"]["median"]:.4f}**, Desviación Estándar = **{stats["benign_tardio"]["std"]:.4f}**
 *   **B) Baseline-solo-longitud**:
-    *   AUROC predictivo del número de turnos en tardío: **{ab['auroc_baseline_length']:.4f}**
+    *   AUROC predictivo del número de turnos en tardío: **{ab["auroc_baseline_length"]:.4f}**
 *   **C) Correlación de Spearman**:
-    *   Coeficiente de correlación $\\rho$ entre temperatura máxima y longitud de turnos en tardío: **{ab['spearman_rho']['rho']:.4f}** ($p$-value = {ab['spearman_rho']['pvalue']})
+    *   Coeficiente de correlación $\\rho$ entre temperatura máxima y longitud de turnos en tardío: **{ab["spearman_rho"]["rho"]:.4f}** ($p$-value = {ab["spearman_rho"]["pvalue"]})
 *   **D) $\\Delta\\text{{AUROC}}$ Pareado Estratificado por Terciles**:
 {terciles_str}
 *   **E) Memoria Normalizada por Longitud**:
-    *   AUROC del acumulador normalizado en tardío: **{ab['auroc_mem_norm']:.4f}**
-    *   $\\Delta\\text{{AUROC}}$ pareado vs Baseline: **{ab['paired_delta_vs_baseline_norm']['delta_point']:.4f}** con IC 95% = **[{ab['paired_delta_vs_baseline_norm']['ci'][0]:.4f}, {ab['paired_delta_vs_baseline_norm']['ci'][1]:.4f}]** (p = {ab['paired_delta_vs_baseline_norm']['p_mem_better']:.4f})"""
+    *   AUROC del acumulador normalizado en tardío: **{ab["auroc_mem_norm"]:.4f}**
+    *   $\\Delta\\text{{AUROC}}$ pareado vs Baseline: **{ab["paired_delta_vs_baseline_norm"]["delta_point"]:.4f}** con IC 95% = **[{ab["paired_delta_vs_baseline_norm"]["ci"][0]:.4f}, {ab["paired_delta_vs_baseline_norm"]["ci"][1]:.4f}]** (p = {ab["paired_delta_vs_baseline_norm"]["p_mem_better"]:.4f})"""
 
     md_content = f"""# Evaluación Semántica No Léxica de Trayectorias (ATBench v5 Semántica)
 

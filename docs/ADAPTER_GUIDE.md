@@ -13,7 +13,14 @@ Esta guía explica detalladamente cómo integrar cualquier sistema de gobernanza
 Cada sistema de gobernanza evaluado debe comunicarse utilizando la interfaz inmutable versión 1 de AegisBench (`src/aegisbench/interfaces/v1.py`). Tu adaptador debe heredar de `TargetSystem`:
 
 ```python
-from aegisbench.interfaces.v1 import TargetSystem, Sample, EvalResult, GovernanceDecision, ScenarioType
+from aegisbench.interfaces.v1 import (
+    TargetSystem,
+    Sample,
+    EvalResult,
+    GovernanceDecision,
+    ScenarioType,
+)
+
 
 class MiAdaptadorPersonalizado(TargetSystem):
     name: str = "mi_sistema_gobernanza"
@@ -47,7 +54,14 @@ A continuación se muestra un adaptador mínimo que se conecta a una API de segu
 ```python
 import time
 import requests
-from aegisbench.interfaces.v1 import TargetSystem, Sample, EvalResult, GovernanceDecision, ScenarioType
+from aegisbench.interfaces.v1 import (
+    TargetSystem,
+    Sample,
+    EvalResult,
+    GovernanceDecision,
+    ScenarioType,
+)
+
 
 class HTTPShieldAdapter(TargetSystem):
     name = "http_shield"
@@ -59,30 +73,28 @@ class HTTPShieldAdapter(TargetSystem):
     def evaluate(self, sample: Sample) -> EvalResult:
         # Extraer el contenido del último turno del usuario
         user_prompt = sample.turns[0].content if sample.turns else ""
-        
+
         start_time = time.perf_counter()
-        
+
         try:
             response = requests.post(
-                self.endpoint_url,
-                json={"prompt": user_prompt},
-                timeout=5.0
+                self.endpoint_url, json={"prompt": user_prompt}, timeout=5.0
             )
             response.raise_for_status()
             data = response.json()
-            
+
             # Mapear decisión de la respuesta API
             api_decision = data.get("action")  # "allow", "block", "escalate"
             decision = GovernanceDecision(api_decision)
             confidence = data.get("confidence")  # Opcional, float o None
-            
+
         except Exception as e:
             # Tolerancia a fallos: decidir bloquear o escalar en caso de error
             decision = GovernanceDecision.ESCALATE
             confidence = None
-            
+
         latency_ms = (time.perf_counter() - start_time) * 1000.0
-        
+
         return EvalResult(
             sample_id=sample.sample_id,
             decision=decision,
@@ -90,7 +102,7 @@ class HTTPShieldAdapter(TargetSystem):
             latency_ms=latency_ms,
             adapter_name=self.name,
             adapter_version=self.version,
-            raw_output=str(data) if 'data' in locals() else f"Error: {e}"
+            raw_output=str(data) if "data" in locals() else f"Error: {e}",
         )
 
     def supports_scenario(self, scenario_type: ScenarioType) -> bool:

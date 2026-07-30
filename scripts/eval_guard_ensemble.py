@@ -17,6 +17,7 @@ clúster + test de signos, estadística post-3a-auditoría).
 Uso:  python scripts/eval_guard_ensemble.py [modelo]
 Env:  GUARD_CACHE · NORM=quantile|none (default quantile) · N_BOOT
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -58,7 +59,7 @@ def auc_rank(pos, neg) -> float:
         while j + 1 < len(sv) and sv[j + 1] == sv[i]:
             j += 1
         if j > i:
-            ranks[order[i:j + 1]] = (i + 1 + j + 1) / 2.0
+            ranks[order[i : j + 1]] = (i + 1 + j + 1) / 2.0
         i = j + 1
     u = ranks[: len(pos)].sum() - len(pos) * (len(pos) + 1) / 2.0
     return float(u / (len(pos) * len(neg)))
@@ -85,21 +86,35 @@ def emp_rank(values, ref_sorted):
 
 def main() -> None:
     model = sys.argv[1] if len(sys.argv) > 1 else "llama-guard3:1b"
-    cache_path = os.environ.get("GUARD_CACHE", str(HERE / "evidence" / "guard_cache.json"))
+    cache_path = os.environ.get(
+        "GUARD_CACHE", str(HERE / "evidence" / "guard_cache.json")
+    )
     cache = json.loads(pathlib.Path(cache_path).read_text(encoding="utf-8"))
-    rows = [json.loads(line) for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")]
+    rows = [
+        json.loads(line)
+        for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")
+    ]
 
     trajs = []
     for row in rows:
-        contents = row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
+        contents = (
+            row["contents"][0]
+            if isinstance(row["contents"][0], list)
+            else row["contents"]
+        )
         sc = []
         for m in contents:
             key = hashlib.sha256(turn_text(m).encode()).hexdigest()[:24]
             if key not in cache:
                 raise SystemExit(f"Cache incompleto ({key}); completar warming primero")
             sc.append(float(cache[key]))
-        trajs.append({"label": int(row["label"]), "fam": str(row.get("risk_source") or ""),
-                      "scores": sc})
+        trajs.append(
+            {
+                "label": int(row["label"]),
+                "fam": str(row.get("risk_source") or ""),
+                "scores": sc,
+            }
+        )
 
     rng = np.random.default_rng(SEED)
     safe_idx = [i for i, t in enumerate(trajs) if t["label"] == 0]
@@ -127,7 +142,9 @@ def main() -> None:
     ref_sorted = {m: np.sort([P[i][m] for i in safe_eval]) for m in base}
 
     def ens(i):
-        return float(np.mean([emp_rank(np.array([P[i][m]]), ref_sorted[m])[0] for m in base]))
+        return float(
+            np.mean([emp_rank(np.array([P[i][m]]), ref_sorted[m])[0] for m in base])
+        )
 
     unsafe_idx = sorted(i for i, t in enumerate(trajs) if t["label"] == 1)
     eval_idx = unsafe_idx + safe_eval
@@ -137,7 +154,9 @@ def main() -> None:
 
     from sklearn.metrics import roc_auc_score
 
-    global_auroc = {m: round(float(roc_auc_score(y, v)), 4) for m, v in scores_by.items()}
+    global_auroc = {
+        m: round(float(roc_auc_score(y, v)), 4) for m, v in scores_by.items()
+    }
 
     def boot_delta(a, b):
         vals = []
@@ -145,15 +164,22 @@ def main() -> None:
             idx = rng.integers(0, len(y), len(y))
             if len(np.unique(y[idx])) < 2:
                 continue
-            vals.append(float(roc_auc_score(y[idx], a[idx]) - roc_auc_score(y[idx], b[idx])))
+            vals.append(
+                float(roc_auc_score(y[idx], a[idx]) - roc_auc_score(y[idx], b[idx]))
+            )
         lo, hi = np.percentile(vals, [2.5, 97.5])
-        return {"delta_medio": round(float(np.mean(vals)), 4),
-                "ci95": [round(float(lo), 4), round(float(hi), 4)],
-                "p_mejora": round(float(np.mean(np.array(vals) > 0)), 4)}
+        return {
+            "delta_medio": round(float(np.mean(vals)), 4),
+            "ci95": [round(float(lo), 4), round(float(hi), 4)],
+            "p_mejora": round(float(np.mean(np.array(vals) > 0)), 4),
+        }
 
     best_single = max(base, key=lambda m: global_auroc[m])
-    deltas = {f"ensemble_vs_{best_single}(mejor_individual)":
-              boot_delta(scores_by["ensemble"], scores_by[best_single])}
+    deltas = {
+        f"ensemble_vs_{best_single}(mejor_individual)": boot_delta(
+            scores_by["ensemble"], scores_by[best_single]
+        )
+    }
 
     # por familia: ensamble vs mejor individual, cluster bootstrap + signos
     fams = sorted({trajs[i]["fam"] for i in unsafe_idx})
@@ -165,10 +191,15 @@ def main() -> None:
         ue = np.array([ens(i) for i in u_by_fam[f]])
         ub = np.array([P[i][best_single] for i in u_by_fam[f]])
         a_e, a_b = auc_rank(ue, s_eval_ens), auc_rank(ub, s_eval_best)
-        per_fam[f] = {"auroc_ensemble": round(a_e, 4), f"auroc_{best_single}": round(a_b, 4),
-                      "delta": round(a_e - a_b, 4)}
+        per_fam[f] = {
+            "auroc_ensemble": round(a_e, 4),
+            f"auroc_{best_single}": round(a_b, 4),
+            "delta": round(a_e - a_b, 4),
+        }
         wins += a_e > a_b
-    p_sign = sum(comb(len(fams), k) for k in range(wins, len(fams) + 1)) / 2 ** len(fams)
+    p_sign = sum(comb(len(fams), k) for k in range(wins, len(fams) + 1)) / 2 ** len(
+        fams
+    )
 
     macros = np.empty(N_BOOT)
     ns = len(safe_eval)
@@ -199,22 +230,32 @@ def main() -> None:
         "bootstrap_cluster_macro_delta": {
             "delta_medio": round(float(macros.mean()), 4),
             "ci95": [round(float(lo), 4), round(float(hi), 4)],
-            "p_mejora": round(float((macros > 0).mean()), 4)},
+            "p_mejora": round(float((macros > 0).mean()), 4),
+        },
         "etiqueta_veracidad": "empirico (hipotesis del ensamble pre-registrada en adenda 9 "
         "ANTES de los datos qwen)",
     }
     print(json.dumps(res, indent=2, ensure_ascii=False))
     READ_ONLY = os.environ.get("READ_ONLY", "0").lower() in ("1", "true", "yes")
-    tag = f"{model.replace(':','_').replace('/','_')}_{NORM}"
-    out = HERE / "evidence" / f"atbench_guard_ensemble_{tag}_{date.today().strftime('%Y%m%d')}.json"
+    tag = f"{model.replace(':', '_').replace('/', '_')}_{NORM}"
+    out = (
+        HERE
+        / "evidence"
+        / f"atbench_guard_ensemble_{tag}_{date.today().strftime('%Y%m%d')}.json"
+    )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
     if not READ_ONLY:
         out.write_text(payload, encoding="utf-8")
-        out.with_suffix(".sha256").write_text(hashlib.sha256(payload.encode()).hexdigest() + "\n")
-        print(f"\nGuardado: {out}\nSHA-256: {hashlib.sha256(payload.encode()).hexdigest()}")
+        out.with_suffix(".sha256").write_text(
+            hashlib.sha256(payload.encode()).hexdigest() + "\n"
+        )
+        print(
+            f"\nGuardado: {out}\nSHA-256: {hashlib.sha256(payload.encode()).hexdigest()}"
+        )
     else:
-        print(f"\n[READ_ONLY=1] Omitiendo escritura en disco para preservar el hash sellado de evidencia.")
-
+        print(
+            "\n[READ_ONLY=1] Omitiendo escritura en disco para preservar el hash sellado de evidencia."
+        )
 
 
 if __name__ == "__main__":

@@ -26,6 +26,7 @@ El descarte de muestras no se realiza de forma aleatoria en tiempo de ejecución
 ```python
 import hashlib
 
+
 def get_held_out_split(sample_id: str) -> str:
     hasher = hashlib.md5(sample_id.encode("utf-8"))
     val = int(hasher.hexdigest(), 16) % 100

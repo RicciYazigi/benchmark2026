@@ -6,6 +6,7 @@ por cada fold, (theta_pct, tau) del acumulador se eligen maximizando AUROC de
 memoria SOBRE TRAIN unicamente (grid pequeño), y se aplican al test del fold.
 Nada del test toca la seleccion. Checkpoint por fold (reanudable).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -37,8 +38,9 @@ for extra in (str(_root), str(_root / "antigravity_wings"), str(HERE / "src")):
     if extra not in sys.path:
         sys.path.insert(0, extra)
 
-from aegisbench.sensors import TfidfTurnSensor  # noqa: E402
 from antigravity_wings.thermal import ThermalAccumulator, ThermalParams  # noqa: E402
+
+from aegisbench.sensors import TfidfTurnSensor  # noqa: E402
 
 SEED = 42
 N_FOLDS = 5
@@ -104,11 +106,20 @@ def memory_maxT(scores, theta: float, tau: float) -> float:
 
 
 def main() -> None:
-    rows = [json.loads(line) for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")]
+    rows = [
+        json.loads(line)
+        for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")
+    ]
     trajs = []
     for row in rows:
-        contents = row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
-        trajs.append({"label": int(row["label"]), "turns": [turn_text(m) for m in contents]})
+        contents = (
+            row["contents"][0]
+            if isinstance(row["contents"][0], list)
+            else row["contents"]
+        )
+        trajs.append(
+            {"label": int(row["label"]), "turns": [turn_text(m) for m in contents]}
+        )
     labels = np.array([t["label"] for t in trajs])
 
     from sklearn.model_selection import StratifiedKFold
@@ -130,7 +141,9 @@ def main() -> None:
         sensor.fit(tr_texts, tr_labels)
 
         tr_scores = {i: sensor.score(trajs[i]["turns"]) for i in tr_idx}
-        safe_scores = [s for i in tr_idx if trajs[i]["label"] == 0 for s in tr_scores[i]]
+        safe_scores = [
+            s for i in tr_idx if trajs[i]["label"] == 0 for s in tr_scores[i]
+        ]
         y_tr = labels[tr_idx]
 
         best = None
@@ -151,17 +164,29 @@ def main() -> None:
             te_max[j] = max(s)
             te_mean[j] = float(np.mean(s))
             te_mem[j] = memory_maxT(s, th_b, tau_b)
-        np.savez(fckpt, te_idx=np.array(te_idx), te_max=te_max, te_mean=te_mean,
-                 te_mem=te_mem, cfg=np.array([pct_b, th_b, tau_b]))
-        print(f"fold {fold}: cfg=(pct={pct_b}, theta={th_b:.4f}, tau={tau_b}) "
-              f"auroc_train_mem={best[0]:.4f} guardado", flush=True)
+        np.savez(
+            fckpt,
+            te_idx=np.array(te_idx),
+            te_max=te_max,
+            te_mean=te_mean,
+            te_mem=te_mem,
+            cfg=np.array([pct_b, th_b, tau_b]),
+        )
+        print(
+            f"fold {fold}: cfg=(pct={pct_b}, theta={th_b:.4f}, tau={tau_b}) "
+            f"auroc_train_mem={best[0]:.4f} guardado",
+            flush=True,
+        )
 
     # agregacion final si todos los folds existen
     if not all((CKPT_DIR / f"fold{f}.npz").exists() for f in range(N_FOLDS)):
         print("faltan folds; relanzar para continuar", flush=True)
         return
-    oof = {"single_max": np.zeros(len(trajs)), "single_mean": np.zeros(len(trajs)),
-           "memory_maxT_cal": np.zeros(len(trajs))}
+    oof = {
+        "single_max": np.zeros(len(trajs)),
+        "single_mean": np.zeros(len(trajs)),
+        "memory_maxT_cal": np.zeros(len(trajs)),
+    }
     cfgs = []
     for f in range(N_FOLDS):
         z = np.load(CKPT_DIR / f"fold{f}.npz")
@@ -179,17 +204,27 @@ def main() -> None:
         "score memoria = max temperatura continua",
         "cfg_por_fold_[pct,theta,tau]": cfgs,
         "n": len(trajs),
-        "auroc": {k: {"puntual": round(auroc(labels, v), 4), "ci95": list(boot_ci(labels, v))}
-                  for k, v in oof.items()},
+        "auroc": {
+            k: {"puntual": round(auroc(labels, v), 4), "ci95": list(boot_ci(labels, v))}
+            for k, v in oof.items()
+        },
         "delta_pareado": {
-            "memoria_cal_vs_mejor_un_turno": paired_delta(labels, oof["memory_maxT_cal"], oof["single_max"]),
-            "memoria_cal_vs_media": paired_delta(labels, oof["memory_maxT_cal"], oof["single_mean"]),
+            "memoria_cal_vs_mejor_un_turno": paired_delta(
+                labels, oof["memory_maxT_cal"], oof["single_max"]
+            ),
+            "memoria_cal_vs_media": paired_delta(
+                labels, oof["memory_maxT_cal"], oof["single_mean"]
+            ),
         },
         "etiqueta_veracidad": "empirico con limites (sensor en dominio; hiperparametros "
         "elegidos con scores in-fold de train, sin tocar test)",
     }
     print(json.dumps(res, indent=2, ensure_ascii=False))
-    out = HERE / "evidence" / f"atbench_sensor_real_tfidf_CAL_{date.today().strftime('%Y%m%d')}.json"
+    out = (
+        HERE
+        / "evidence"
+        / f"atbench_sensor_real_tfidf_CAL_{date.today().strftime('%Y%m%d')}.json"
+    )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
     out.write_text(payload, encoding="utf-8")
     sha = hashlib.sha256(payload.encode()).hexdigest()

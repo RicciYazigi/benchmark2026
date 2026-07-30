@@ -19,11 +19,11 @@ Uso:
   python3 scripts/eval_atbench_sensor_real.py            # sensor tfidf
   python3 scripts/eval_atbench_sensor_real.py guard      # guard model via ollama
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
-import math
 import os
 import pathlib
 import sys
@@ -51,8 +51,9 @@ for extra in (str(_root), str(_root / "antigravity_wings"), str(HERE / "src")):
     if extra not in sys.path:
         sys.path.insert(0, extra)
 
-from aegisbench.sensors import GuardModelHTTPSensor, TfidfTurnSensor  # noqa: E402
 from antigravity_wings.thermal import ThermalAccumulator, ThermalParams  # noqa: E402
+
+from aegisbench.sensors import GuardModelHTTPSensor, TfidfTurnSensor  # noqa: E402
 
 SEED = 42
 TAU = 5.0
@@ -109,7 +110,9 @@ def turn_text(m: dict) -> str:
 
 def run_memory(scores, theta: float) -> float:
     acc = ThermalAccumulator(
-        params=ThermalParams(tau=TAU, T_trip=1e9, theta_ref=theta)  # sin trip: score continuo
+        params=ThermalParams(
+            tau=TAU, T_trip=1e9, theta_ref=theta
+        )  # sin trip: score continuo
     )
     max_T = 0.0
     for i, c in enumerate(scores):
@@ -120,10 +123,17 @@ def run_memory(scores, theta: float) -> float:
 
 def main() -> None:
     mode = sys.argv[1] if len(sys.argv) > 1 else "tfidf"
-    rows = [json.loads(line) for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")]
+    rows = [
+        json.loads(line)
+        for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")
+    ]
     trajs = []
     for row in rows:
-        contents = row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
+        contents = (
+            row["contents"][0]
+            if isinstance(row["contents"][0], list)
+            else row["contents"]
+        )
         trajs.append(
             {
                 "id": str(row["id"]),
@@ -146,13 +156,18 @@ def main() -> None:
 
     skf = StratifiedKFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)
 
-    oof = {"single_max": np.zeros(len(trajs)), "single_mean": np.zeros(len(trajs)),
-           "memory_maxT": np.zeros(len(trajs))}
+    oof = {
+        "single_max": np.zeros(len(trajs)),
+        "single_mean": np.zeros(len(trajs)),
+        "memory_maxT": np.zeros(len(trajs)),
+    }
     fold_thetas = []
 
     for fold, (tr_idx, te_idx) in enumerate(skf.split(np.zeros(len(trajs)), labels)):
         if mode == "guard":
-            sensor = GuardModelHTTPSensor(cache_path=str(HERE / "evidence" / "guard_cache.json"))
+            sensor = GuardModelHTTPSensor(
+                cache_path=str(HERE / "evidence" / "guard_cache.json")
+            )
         else:
             sensor = TfidfTurnSensor(seed=SEED)
             tr_texts, tr_labels = [], []
@@ -185,7 +200,9 @@ def _report(mode, trajs, labels, oof, fold_thetas) -> None:
     res = {
         "fecha": str(date.today()),
         "modo_sensor": mode,
-        "sensor": "tfidf-logreg-v1 (supervision debil OOF)" if mode != "guard" else "guard-http-v1",
+        "sensor": "tfidf-logreg-v1 (supervision debil OOF)"
+        if mode != "guard"
+        else "guard-http-v1",
         "protocolo": f"{N_FOLDS}-fold estratificado por trayectoria, seed {SEED}, "
         f"tau={TAU}, theta calibrado por fold (p90 turnos seguros train), "
         f"score memoria = max temperatura (continuo, sin T_trip)",
@@ -198,7 +215,10 @@ def _report(mode, trajs, labels, oof, fold_thetas) -> None:
         "generalizacion fuera de dominio: ND hasta la fase guard model)",
     }
     for k, v in oof.items():
-        res["auroc"][k] = {"puntual": round(auroc(labels, v), 4), "ci95": list(boot_ci(labels, v))}
+        res["auroc"][k] = {
+            "puntual": round(auroc(labels, v), 4),
+            "ci95": list(boot_ci(labels, v)),
+        }
     res["delta_pareado"]["memoria_vs_mejor_un_turno"] = paired_delta(
         labels, oof["memory_maxT"], oof["single_max"]
     )
@@ -207,7 +227,11 @@ def _report(mode, trajs, labels, oof, fold_thetas) -> None:
     )
 
     print(json.dumps(res, indent=2, ensure_ascii=False))
-    out = HERE / "evidence" / f"atbench_sensor_real_{mode}_{date.today().strftime('%Y%m%d')}.json"
+    out = (
+        HERE
+        / "evidence"
+        / f"atbench_sensor_real_{mode}_{date.today().strftime('%Y%m%d')}.json"
+    )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
     out.write_text(payload, encoding="utf-8")
     sha = hashlib.sha256(payload.encode()).hexdigest()

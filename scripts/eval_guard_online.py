@@ -19,6 +19,7 @@ Uso:  python scripts/eval_guard_online.py [modelo]
 Env:  GUARD_CACHE (default evidence/guard_cache.json) · NORM=quantile|none ·
       N_BOOT (default 2000)
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -55,15 +56,24 @@ def turn_text(m: dict) -> str:
 
 
 def load_scored_trajs(model: str):
-    cache_path = os.environ.get("GUARD_CACHE", str(HERE / "evidence" / "guard_cache.json"))
+    cache_path = os.environ.get(
+        "GUARD_CACHE", str(HERE / "evidence" / "guard_cache.json")
+    )
     cache = {}
     if pathlib.Path(cache_path).exists():
         cache = json.loads(pathlib.Path(cache_path).read_text(encoding="utf-8"))
     sensor = None
-    rows = [json.loads(line) for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")]
+    rows = [
+        json.loads(line)
+        for line in open(HERE / "data" / "atbench_test.jsonl", encoding="utf-8")
+    ]
     trajs, misses = [], 0
     for row in rows:
-        contents = row["contents"][0] if isinstance(row["contents"][0], list) else row["contents"]
+        contents = (
+            row["contents"][0]
+            if isinstance(row["contents"][0], list)
+            else row["contents"]
+        )
         scores = []
         for m in contents:
             t = turn_text(m)
@@ -77,8 +87,13 @@ def load_scored_trajs(model: str):
                     sensor = GuardModelHTTPSensor(model=model, cache_path=cache_path)
                 scores.append(sensor.score([t])[0])
                 misses += 1
-        trajs.append({"label": int(row["label"]), "risk_source": str(row.get("risk_source") or ""),
-                      "scores": scores})
+        trajs.append(
+            {
+                "label": int(row["label"]),
+                "risk_source": str(row.get("risk_source") or ""),
+                "scores": scores,
+            }
+        )
     return trajs, misses
 
 
@@ -142,14 +157,18 @@ def main() -> None:
     else:
         theta = float(np.percentile(cal_raw, 90))
         if theta >= 1.0:
-            theta_warning = "theta p90 = 1.0 -> fallback 0.5 (sensor binario con FP>10%)"
+            theta_warning = (
+                "theta p90 = 1.0 -> fallback 0.5 (sensor binario con FP>10%)"
+            )
             theta = 0.5
         k_ref = float(np.percentile(cal_raw, 75))
         if k_ref >= 1.0:
             k_ref = 0.5
         score_key = "scores"
 
-    methods = ["runmax", "runmean", "ewma", "cusum"] + [f"thermal_tau{t:g}" for t in TAUS]
+    methods = ["runmax", "runmean", "ewma", "cusum"] + [
+        f"thermal_tau{t:g}" for t in TAUS
+    ]
     series_all, peaks, y = {}, {m: [] for m in methods}, []
     for i in eval_idx:
         ser = online_series(trajs[i][score_key], theta, k_ref)
@@ -170,9 +189,11 @@ def main() -> None:
                 continue
             vals.append(auroc(y[idx], a[idx]) - auroc(y[idx], b[idx]))
         lo, hi = np.percentile(vals, [2.5, 97.5])
-        return {"delta_medio": round(float(np.mean(vals)), 4),
-                "ci95": [round(float(lo), 4), round(float(hi), 4)],
-                "p_mejora": round(float(np.mean(np.array(vals) > 0)), 4)}
+        return {
+            "delta_medio": round(float(np.mean(vals)), 4),
+            "ci95": [round(float(lo), 4), round(float(hi), 4)],
+            "p_mejora": round(float(np.mean(np.array(vals) > 0)), 4),
+        }
 
     th = f"thermal_tau{TAUS[0]:g}"
     deltas = {
@@ -195,9 +216,11 @@ def main() -> None:
                 if hit is not None:
                     tp += 1
                     fracs.append((hit + 1) / len(ser))
-            block[m] = {"tpr": round(tp / len(unsafe_idx), 4),
-                        "frac_al_detectar": round(float(np.mean(fracs)), 4) if fracs else None}
-        det[f"fpr_{int(fpr*100)}pct"] = block
+            block[m] = {
+                "tpr": round(tp / len(unsafe_idx), 4),
+                "frac_al_detectar": round(float(np.mean(fracs)), 4) if fracs else None,
+            }
+        det[f"fpr_{int(fpr * 100)}pct"] = block
 
     res = {
         "fecha": str(date.today()),
@@ -221,16 +244,25 @@ def main() -> None:
     }
     print(json.dumps(res, indent=2, ensure_ascii=False))
     READ_ONLY = os.environ.get("READ_ONLY", "0").lower() in ("1", "true", "yes")
-    tag = f"{model.replace(':','_').replace('/','_')}_{NORM}"
-    out = HERE / "evidence" / f"atbench_guard_online_v2_{tag}_{date.today().strftime('%Y%m%d')}.json"
+    tag = f"{model.replace(':', '_').replace('/', '_')}_{NORM}"
+    out = (
+        HERE
+        / "evidence"
+        / f"atbench_guard_online_v2_{tag}_{date.today().strftime('%Y%m%d')}.json"
+    )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
     if not READ_ONLY:
         out.write_text(payload, encoding="utf-8")
-        out.with_suffix(".sha256").write_text(hashlib.sha256(payload.encode()).hexdigest() + "\n")
-        print(f"\nGuardado: {out}\nSHA-256: {hashlib.sha256(payload.encode()).hexdigest()}")
+        out.with_suffix(".sha256").write_text(
+            hashlib.sha256(payload.encode()).hexdigest() + "\n"
+        )
+        print(
+            f"\nGuardado: {out}\nSHA-256: {hashlib.sha256(payload.encode()).hexdigest()}"
+        )
     else:
-        print(f"\n[READ_ONLY=1] Omitiendo escritura en disco para preservar el hash sellado de evidencia.")
-
+        print(
+            "\n[READ_ONLY=1] Omitiendo escritura en disco para preservar el hash sellado de evidencia."
+        )
 
 
 if __name__ == "__main__":
