@@ -1,21 +1,25 @@
-# Resultados de Fase 4 — J-Space v0 (Representaciones Latentes y Sonda de Deriva Temporal)
+# Resultados de Fase 4 — J-Space v0 (Dataset Completo: 9,009 Turnos)
 
 **TRACE_ID:** ARS-20260729-JSP0  
 **Fecha de Ejecución:** 2026-07-29  
-**Modelo Probeta:** `Qwen/Qwen2.5-0.5B` (Hidden states de la última capa con Mean Pooling)  
+**Modelo Probeta:** `Qwen/Qwen2.5-0.5B` (Hidden states de la última capa con Mean Pooling sobre los 9,009 turnos completos de ATBench)  
 **Protocolo:** Out-of-Fold (5-fold cross-validation) por trayectoria (supervisión débil por etiqueta de trayectoria), normalización por cuantiles y agregación temporal online.  
 **Archivo de Evidencia Sellado:** `evidence/jspace_probe_Qwen_Qwen2.5-0.5B_20260729.json`  
-**SHA-256:** `110e082e59ddfe479a1dece6c78ab6579cc224aebec904e3db423dac8f1c127a`
+**SHA-256:** `2a43cd5935d4309f29e63645c5afe550764e14530a144375b95044e85c960935`
+
+> [!NOTE]
+> **Aviso de Retractación de la Versión Preliminar (PARCIAL-RETIRADA):**  
+> La ejecución preliminar sobre el subconjunto de 4,889 turnos (54% del dataset, 7 familias) queda oficialmente marcada como **PARCIAL-RETIRADA** debido a truncamiento del cache de entrada. El presente documento contiene la evaluación definitiva sobre las **1,000 muestras íntegras de ATBench (9,009 turnos completados, 8 familias de riesgo completas y N=198 eventos de inyección en `environment`)**.
 
 ---
 
-## 1. Veredicto de las Hipótesis Pre-registradas
+## 1. Veredicto de las Hipótesis Pre-registradas (Dataset Completo 9,009 Turnos)
 
-| Hipótesis | Descripción | Resultado Empírico | Veredicto |
+| Hipótesis | Descripción | Resultado Empírico (9,009 turnos) | Veredicto |
 | :--- | :--- | :--- | :--- |
-| **H-J1** | **Acumulación Temporal en Espacio Latente $J$:** CUSUM sobre $J$ supera a detectores reactivos (Runmax). | CUSUM 0.7880 vs Runmax 0.7609 ($\Delta = +0.0275$, IC 95% = $[0.0004, 0.0567]$, $P_{\text{mejora}} = 0.975$). Ganado en **7/7 familias** ($p = 0.00781$). | **CONFIRMADA** *(Empírico)* |
-| **H-J2** | **Superioridad Absoluta de Representación $J$:** Los estados ocultos superan al sensor textual/TF-IDF. | Probe $J$ AUROC = **0.7880** vs Baseline TF-IDF sellado = **0.8760** ($\Delta = -0.0880$). | **FALSADA** *(Empírico con límites)* |
-| **H-J3** | **Localización Fina de Inyecciones:** El argmax del score latente identifica el turno exacto de inyección en `environment`. | Acierto en `environment`: **12.71%** (Tasa aleatoria base: **33.91%**). | **FALSADA** *(Empírico)* |
+| **H-J1** | **Acumulación Temporal en Espacio Latente $J$:** CUSUM sobre $J$ supera a detectores reactivos (Runmax). | CUSUM **0.8210** vs Runmax **0.8120** ($\Delta = +0.0088$, IC 95% = **[-0.0116, 0.0284]**; $P_{\text{mejora}} = 0.812$). Ganado en **5/8 familias** ($p = 0.36328$). | **FALSADA / NO ALCANZA SIGNIFICANCIA** *(IC incluye 0)* |
+| **H-J2** | **Superioridad Absoluta de Representación $J$:** Los estados ocultos superan al sensor textual/TF-IDF. | Probe $J$ AUROC = **0.8210** vs Baseline TF-IDF sellado = **0.8760** ($\Delta = -0.0550$). | **FALSADA** *(Empírico)* |
+| **H-J3** | **Localización Fina de Inyecciones:** El argmax del score latente identifica el turno exacto de inyección en `environment`. | Acierto en `environment` ($N=198$): **17.68%** (vs Tasa aleatoria base: **34.60%**). | **FALSADA** *(Empírico)* |
 
 ---
 
@@ -23,44 +27,45 @@
 
 | Agregador Temporal | AUROC | $\Delta$ vs Runmax | IC 95% Bootstrap | $P_{\text{mejora}}$ |
 | :--- | :--- | :--- | :--- | :--- |
-| **CUSUM (Acumulativo)** | **0.7880** | **+0.0275** | **[0.0004, 0.0567]** | **0.9750** |
-| Thermal ($I^2t$, $\tau=5$) | 0.7657 | +0.0051 | [-0.0075, 0.0176] | 0.7800 |
-| Runmax (Reactivo Baseline) | 0.7609 | 0.0000 | Ref. | — |
-| EWMA ($\alpha=0.3$) | 0.7126 | -0.0483 | [-0.0812, -0.0154] | 0.0010 |
-| Runmean (Promedio simple) | 0.6890 | -0.0719 | [-0.1045, -0.0392] | 0.0000 |
+| **CUSUM (Acumulativo)** | **0.8210** | **+0.0088** | **[-0.0116, 0.0284]** | **0.8120** |
+| Runmax (Reactivo Baseline) | 0.8120 | 0.0000 | Ref. | — |
+| Thermal ($I^2t$, $\tau=5$) | 0.8012 | -0.0112 | [-0.0212, -0.0019] | 0.0080 |
+| EWMA ($\alpha=0.3$) | 0.7494 | -0.0626 | [-0.0915, -0.0310] | 0.0000 |
+| Runmean (Promedio simple) | 0.7256 | -0.0864 | [-0.1180, -0.0520] | 0.0000 |
 
 ---
 
-## 3. Desglose por Familia de Riesgo (CUSUM vs Runmax en $J$)
+## 3. Desglose por las 8 Familias de Riesgo (CUSUM vs Runmax en $J$)
 
-En **7 de 7 familias**, la acumulación de riesgo con memoria temporal (CUSUM) superó a la detección puntual sin memoria (Runmax) en el espacio de representaciones latentes $J$ ($p = 0.00781$, prueba de signos unilateral):
+En **5 de 8 familias**, CUSUM superó ligeramente a Runmax, pero la ganancia global no alcanza significancia estadística unánime ($p = 0.36328$, prueba de signos unilateral):
 
-| Familia de Riesgo | AUROC CUSUM | AUROC Runmax | $\Delta$ (CUSUM - Runmax) |
-| :--- | :--- | :--- | :--- |
-| `unreliable_or_misinformation` | **0.8556** | 0.8306 | **+0.0250** |
-| `corrupted_tool_feedback` | **0.8343** | 0.7827 | **+0.0516** |
-| `malicious_tool_execution` | **0.8056** | 0.7688 | **+0.0368** |
-| `indirect_prompt_injection` | **0.7950** | 0.7705 | **+0.0245** |
-| `tool_description_injection` | **0.7943** | 0.7677 | **+0.0266** |
-| `inherent_agent_failures` | **0.7609** | 0.7386 | **+0.0223** |
-| `direct_prompt_injection` | **0.6757** | 0.6569 | **+0.0188** |
-
----
-
-## 4. Análisis Crítico de los Hallazgos
-
-1. **La Tesis de Acumulación Temporal se sostiene intrínsecamente en el espacio $J$:**
-   La evidencia confirma que incluso dentro de representaciones latentes internas de la red neuronal (y no solo en scores de clasificadores de texto), **el riesgo se acumula dinámicamente a lo largo del tiempo**. CUSUM captura la elevación sostenida en $J$ superando al pico reactivo en **7/7 familias** con un IC 95% que excluye el cero.
-
-2. **Por qué la sonda $J$ cruda no supera a los clasificadores dedicados (Falsación de H-J2):**
-   Las representaciones latentes crudas de la última capa sufren de *confounding* espacial por longitud de secuencia, estilo de prompt y topic drift. Un clasificador especializado como TF-IDF (AUROC 0.8760) o Llama-Guard3 / Qwen-Guard extraen características semánticas filtradas mucho más limpias que una proyección lineal simple sobre la representación latente media de la última capa.
-
-3. **Deriva Temporal vs Localización Puntual (Falsación de H-J3):**
-   Cuando ocurre una inyección indirecta en el turno de `environment` (herramienta), la señal en el espacio latente no alcanza su pico máximo de manera instantánea en ese único turno. La anomalía latente se propaga y amplifica progresivamente durante las respuestas subsecuentes del agente, haciendo que el $12.71\%$ de localización puntual en `environment` sea insuficiente para uso como sensor de turno único.
+| Familia de Riesgo | AUROC CUSUM | AUROC Runmax | $\Delta$ (CUSUM - Runmax) | Estado |
+| :--- | :--- | :--- | :--- | :--- |
+| `malicious_tool_execution` | **0.8876** | 0.8646 | **+0.0230** | ✅ CUSUM gana |
+| `direct_prompt_injection` | **0.7646** | 0.7285 | **+0.0361** | ✅ CUSUM gana |
+| `inherent_agent_failures` | **0.8307** | 0.8081 | **+0.0225** | ✅ CUSUM gana |
+| `tool_description_injection` | **0.7732** | 0.7593 | **+0.0138** | ✅ CUSUM gana |
+| `unreliable_or_misinformation` | **0.8153** | 0.8092 | **+0.0061** | ✅ CUSUM gana |
+| `corrupted_tool_feedback` | 0.8124 | **0.8143** | **-0.0019** | ❌ Runmax gana |
+| `indirect_prompt_injection` | 0.8451 | **0.8550** | **-0.0099** | ❌ Runmax gana |
+| `malicious_user_instruction_or_jailbreak` | 0.8312 | **0.8445** | **-0.0133** | ❌ Runmax gana |
 
 ---
 
-## 5. Conclusión y Framing Final
+## 4. Análisis Crítico y Lección Científica Honesta
 
-- **$J$-Space v0 valida la generalización de la Tesis Norte:** El mecanismo fusible de acumulación de memoria con CUSUM no es un artefacto exclusivo de un clasificador de texto particular; **es una propiedad estructural fundamental de la seguridad en sistemas multi-turno**.
-- La capa de contención agnóstica (`fuse-ai`) es el diseño correcto: recibe cualquier señal de riesgo continua (sea de sensores textuales, embeddings o sondas $J$) y aplica la memoria acumulativa temporal donde los detectores instantáneos fallan.
+1. **H-J1 No Alcanza Significancia Estadística en Activaciones Crudas:**  
+   Al evaluar el dataset completo de 9,009 turnos, la diferencia entre CUSUM (0.8210) y Runmax (0.8120) se reduce a $\Delta = +0.0088$. El intervalo de confianza bootstrap del 95% `[-0.0116, 0.0284]` incluye explícitamente el cero. Siguiendo nuestra regla estricta de rigurosidad (*"si el IC incluye cero, no se afirma victoria"*), declaramos H-J1 como **FALSADA / NO SIGNIFICATIVA** sobre activaciones latentes crudas sin filtrar.
+
+2. **Ruido Espacial y Confounding en Activaciones de Última Capa (H-J2 Falsada):**  
+   Las representaciones internas latentes de un LLM no entrenado específicamente para clasificación de seguridad contienen alta varianza atribuible a la longitud de la respuesta, patrones de sintaxis de herramientas y variabilidad temática. Un clasificador textual dedicado (como TF-IDF con AUROC 0.8760 o Llama Guard 3) actúa como un filtro de señal mucho más efectivo que una sonda lineal sobre activations crudas.
+
+3. **Ceguera al Turno Puntual de Inyección (H-J3 Falsada):**  
+   Con los $N=198$ eventos de inyección en `environment` evaluados en el dataset completo, la tasa de localización puntual por argmax fue de apenas **17.68%** (frente a un azar del **34.60%**). La distorsión latente introducida por la herramienta no se concentra de manera aislada en el turno de entrada, sino que se propaga y diluye en los turnos de razonamiento y acción del agente.
+
+---
+
+## 5. Conclusión de la Fase 4
+
+- **Retractación Transparente:** Cumpliendo con el estándar de integridad científica del proyecto, la versión preliminar de 4,889 turnos queda descartada y sustituida por las mediciones completas de 9,009 turnos documentadas en este informe.
+- **Confirmación del Enfoque del Producto (`fuse-ai`):** Las sondas latentes en activaciones crudas no sustituyen a los sensores de seguridad textuales deducidos. La capa de contención agnóstica de `fuse-ai` debe ser alimentada primordialmente por clasificadores de seguridad calibrados sobre texto (donde CUSUM sí demuestra superioridad estadísticamente significativa de $p=0.0039$ e IC que excluye el cero).

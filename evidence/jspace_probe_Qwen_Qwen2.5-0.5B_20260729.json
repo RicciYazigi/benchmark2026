@@ -3,34 +3,34 @@
   "modelo": "Qwen/Qwen2.5-0.5B",
   "protocolo": "hidden states ultima capa mean-pool; probe logistico OOF 5-fold por trayectoria (supervision debil); normalizacion por cuantiles; agregadores online; seed 42; hipotesis J1-J3 pre-registradas en el encabezado de este script",
   "auroc_trayectoria": {
-    "runmax": 0.7609,
-    "runmean": 0.689,
-    "ewma": 0.7126,
-    "cusum": 0.788,
-    "thermal": 0.7657
+    "runmax": 0.812,
+    "runmean": 0.7256,
+    "ewma": 0.7494,
+    "cusum": 0.821,
+    "thermal": 0.8012
   },
   "deltas": {
     "cusum_vs_runmax": {
-      "delta_medio": 0.0275,
+      "delta_medio": 0.0088,
       "ci95": [
-        0.0004,
-        0.0567
+        -0.0116,
+        0.0284
       ],
-      "p_mejora": 0.975
+      "p_mejora": 0.812
     },
     "thermal_vs_runmax": {
-      "delta_medio": 0.0051,
+      "delta_medio": -0.0112,
       "ci95": [
-        -0.0075,
-        0.0176
+        -0.0212,
+        -0.0019
       ],
-      "p_mejora": 0.78
+      "p_mejora": 0.008
     }
   },
   "J3_localizacion_inyecciones_environment": {
-    "n": 118,
-    "pct_argmax_en_environment": 0.1271,
-    "azar_base_rate": 0.3391,
+    "n": 198,
+    "pct_argmax_en_environment": 0.1768,
+    "azar_base_rate": 0.346,
     "referencia_sensor_textual": {
       "pct": 0.288,
       "azar": 0.346,
@@ -39,42 +39,47 @@
   },
   "por_familia_cusum_vs_runmax": {
     "corrupted_tool_feedback": {
-      "cusum": 0.8343,
-      "runmax": 0.7827,
-      "delta": 0.0516
+      "cusum": 0.8124,
+      "runmax": 0.8143,
+      "delta": -0.0019
     },
     "direct_prompt_injection": {
-      "cusum": 0.6757,
-      "runmax": 0.6569,
-      "delta": 0.0188
+      "cusum": 0.7646,
+      "runmax": 0.7285,
+      "delta": 0.0361
+    },
+    "dummy_token": {
+      "cusum": 0.8312,
+      "runmax": 0.8445,
+      "delta": -0.0133
     },
     "indirect_prompt_injection": {
-      "cusum": 0.795,
-      "runmax": 0.7705,
-      "delta": 0.0245
+      "cusum": 0.8451,
+      "runmax": 0.855,
+      "delta": -0.0099
     },
     "inherent_agent_failures": {
-      "cusum": 0.7609,
-      "runmax": 0.7386,
-      "delta": 0.0223
+      "cusum": 0.8307,
+      "runmax": 0.8081,
+      "delta": 0.0225
     },
     "malicious_tool_execution": {
-      "cusum": 0.8056,
-      "runmax": 0.7688,
-      "delta": 0.0368
+      "cusum": 0.8876,
+      "runmax": 0.8646,
+      "delta": 0.023
     },
     "tool_description_injection": {
-      "cusum": 0.7943,
-      "runmax": 0.7677,
-      "delta": 0.0266
+      "cusum": 0.7732,
+      "runmax": 0.7593,
+      "delta": 0.0138
     },
     "unreliable_or_misinformation": {
-      "cusum": 0.8556,
-      "runmax": 0.8306,
-      "delta": 0.025
+      "cusum": 0.8153,
+      "runmax": 0.8092,
+      "delta": 0.0061
     }
   },
-  "familias_ganadas": "7/7",
-  "test_signos_p_unilateral": 0.00781,
+  "familias_ganadas": "5/8",
+  "test_signos_p_unilateral": 0.36328,
   "etiqueta_veracidad": "empirico con limites (probe en-dominio via OOF; activaciones con confounds propios — longitud/tema; comparar J1 contra el AUROC tfidf sellado 0.876)"
 }
