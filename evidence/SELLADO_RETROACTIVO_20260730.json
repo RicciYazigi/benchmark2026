@@ -1,0 +1,36 @@
+{
+  "trace_id": "ARS-20260730-CANON-0001",
+  "motivo": "artefactos commiteados sin sidecar .sha256; la cadena de evidencia no los cubria",
+  "artefactos": {
+    "atbench_trajectory_results_20260714.json": {
+      "sha256": "9499a2baa0b2e09c5b607efb1b7c0f534c33a0e4080d75e65e8cfbec08458ab9",
+      "commit_origen": "06cd90a 2026-07-13",
+      "sellado_utc": "2026-07-30",
+      "nota": "sellado RETROACTIVO sobre el contenido ya commiteado; el experimento NO se re-ejecuto"
+    },
+    "atbench_trajectory_results_20260717.json": {
+      "sha256": "40eccbffd72193c395c6dec3a3a59268ee7c3cefc356a5fb58b8d2de51ad2ebe",
+      "commit_origen": "530ccbf 2026-07-17",
+      "sellado_utc": "2026-07-30",
+      "nota": "sellado RETROACTIVO sobre el contenido ya commiteado; el experimento NO se re-ejecuto"
+    },
+    "atbench_trajectory_results_20260718.json": {
+      "sha256": "8c741af291024208013721033e1e397063c7b1f8b3105b207d7426650bf388fa",
+      "commit_origen": "530ccbf 2026-07-17",
+      "sellado_utc": "2026-07-30",
+      "nota": "sellado RETROACTIVO sobre el contenido ya commiteado; el experimento NO se re-ejecuto"
+    },
+    "atbench_trajectory_results_semantic_20260718.json": {
+      "sha256": "f29e60afe0b90769bbf98654d04332df08b65c9ba386abad40e93c9ef0b89c9e",
+      "commit_origen": "d476f70 2026-07-17",
+      "sellado_utc": "2026-07-30",
+      "nota": "sellado RETROACTIVO sobre el contenido ya commiteado; el experimento NO se re-ejecuto"
+    },
+    "atbench_v5_20260718.json": {
+      "sha256": "743f9757916cb79be3769098013e5b822fff423188d1949e2d1a53201b019bbc",
+      "commit_origen": "ff989a2 2026-07-29",
+      "sellado_utc": "2026-07-30",
+      "nota": "sellado RETROACTIVO sobre el contenido ya commiteado; el experimento NO se re-ejecuto"
+    }
+  }
+}

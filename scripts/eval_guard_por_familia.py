@@ -193,9 +193,9 @@ def main() -> None:
         / f"atbench_guard_por_familia_{model.replace(':', '_').replace('/', '_')}_{date.today().strftime('%Y%m%d')}.json"
     )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
-    out.write_text(payload, encoding="utf-8")
-    out.with_suffix(".sha256").write_text(
-        hashlib.sha256(payload.encode()).hexdigest() + "\n"
+    out.write_bytes(payload.encode("utf-8"))  # binario: evita CRLF de Windows
+    out.with_suffix(".sha256").write_bytes(
+        (hashlib.sha256(payload.encode()).hexdigest() + "\n").encode("utf-8")
     )
     print(f"\nGuardado: {out}\nSHA-256: {hashlib.sha256(payload.encode()).hexdigest()}")
 

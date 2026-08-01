@@ -31,11 +31,23 @@ aegisbench = "aegisbench.cli.main:main"
 packages = ["src/aegisbench"]
 
 [project.optional-dependencies]
+# El nucleo de AegisBench se mantiene ligero a proposito: un benchmark black-box
+# no debe arrastrar el stack de ML de nadie. Los sensores propios (TF-IDF+logreg)
+# si necesitan scikit-learn, asi que va en su propio extra.
+#
+# Hallazgo 2026-07-30: `sklearn` se importaba en src/aegisbench/sensors/
+# sin estar declarado en ninguna parte. Los 3 tests de TfidfTurnSensor solo
+# pasaban si el entorno ya lo tenia — el CI estaba verde por accidente del
+# runner, no por contrato de dependencias.
+sensors = [
+    "scikit-learn>=1.1",
+]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "mypy>=1.0.0",
     "ruff>=0.1.0",
+    "scikit-learn>=1.1",
 ]
 
 [tool.ruff]

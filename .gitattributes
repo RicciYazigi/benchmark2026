@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------------------
+# Normalizacion de finales de linea — CRITICO PARA LA CADENA DE EVIDENCIA.
+#
+# Causa raiz historica (auditoria 2026-07-30): herramientas Windows convertian
+# LF -> CRLF en el working tree, cambiando el SHA-256 de artefactos sellados sin
+# alterar su contenido. 48 de 49 archivos "modificados" en los dos repos eran
+# exactamente eso. La propiedad que este proyecto vende ("un auditor reproduce
+# la evidencia bit a bit") fallaba por finales de linea.
+#
+# Regla: TODO se guarda con LF en el repo y en el working tree. La evidencia
+# sellada se trata como binaria para que git jamas la toque.
+# ---------------------------------------------------------------------------
+
+* text=auto eol=lf
+
+# Evidencia sellada: intocable por cualquier filtro de git
+evidence/**       -text
+**/evidence/**    -text
+*.sha256          -text
+*.npz             binary
+*.jsonl           -text
+
+# Datos y reportes con hash
+data/**           -text
+reports_*/**      -text
+
+# Codigo y docs: LF explicito
+*.py    text eol=lf
+*.json  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.toml  text eol=lf
+*.cfg   text eol=lf
+*.txt   text eol=lf
+*.csv   text eol=lf
+
+# Scripts de shell: LF obligatorio (CRLF los rompe bajo WSL/bash)
+*.sh    text eol=lf
+
+# Windows-only
+*.bat   text eol=crlf
+*.ps1   text eol=crlf

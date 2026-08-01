@@ -42,3 +42,24 @@ jobs:
     - name: Smoke run dummy adapter
       run: |
         aegisbench run --adapter dummy --dataset xstest --n 10
+
+    # ---------------------------------------------------------------------
+    # GATES DE INTEGRIDAD DE EVIDENCIA (anadidos 2026-07-30).
+    # Este repo publica evidencia sellada con SHA-256 pero no tenia ningun
+    # gate que la verificara: 10 de 17 artefactos llevaban ~3 semanas sin
+    # coincidir con su sidecar (causa: CRLF de Windows al escribir en modo
+    # texto tras hashear el payload en memoria). Sin estos dos pasos, el
+    # fallo es invisible hasta que lo encuentra un tercero.
+    # ---------------------------------------------------------------------
+    - name: Evidence seal gate (cada .sha256 reproduce su artefacto)
+      run: python scripts/verify_evidence_seals.py
+
+    - name: Line-ending gate (sin CR en archivos versionados)
+      run: |
+        if git grep -Il $'\r' -- ':(exclude)conversaciones antigravity/**' ':(exclude)*.ps1' ':(exclude)*.bat'; then
+          echo "::error::CRLF detectado. Un CRLF cambia el SHA-256 sin cambiar"
+          echo "el contenido y rompe la cadena de evidencia."
+          echo "Corrige con: git add --renormalize ."
+          exit 1
+        fi
+        echo "line endings OK (LF)"

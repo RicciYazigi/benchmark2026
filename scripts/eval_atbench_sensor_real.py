@@ -233,9 +233,9 @@ def _report(mode, trajs, labels, oof, fold_thetas) -> None:
         / f"atbench_sensor_real_{mode}_{date.today().strftime('%Y%m%d')}.json"
     )
     payload = json.dumps(res, indent=2, ensure_ascii=False)
-    out.write_text(payload, encoding="utf-8")
+    out.write_bytes(payload.encode("utf-8"))  # binario: evita CRLF de Windows
     sha = hashlib.sha256(payload.encode()).hexdigest()
-    out.with_suffix(".sha256").write_text(sha + "\n")
+    out.with_suffix(".sha256").write_bytes((sha + "\n").encode("utf-8"))
     print(f"\nGuardado: {out}\nSHA-256: {sha}")
 
 

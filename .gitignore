@@ -34,3 +34,7 @@ C:\Users\USER\.aegisbench/
 *.njsproj
 *.sln
 *.swp
+
+# Caches de modelos guard: NO son evidencia cientifica, son acelerador local.
+# Vivian en evidence/ y ensuciaban el gate de cadena de evidencia (jul 2026).
+evidence/guard_cache*.json

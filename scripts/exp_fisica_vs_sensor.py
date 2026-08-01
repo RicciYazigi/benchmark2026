@@ -401,7 +401,7 @@ results["exp_F_oraculo_estructura_real"] = exp_f
 # ============================================================================
 out = HERE / "evidence" / "exp_fisica_vs_sensor_20260718.json"
 payload = json.dumps(results, indent=2, ensure_ascii=False)
-out.write_text(payload, encoding="utf-8")
+out.write_bytes(payload.encode("utf-8"))  # binario: evita CRLF de Windows
 sha = hashlib.sha256(payload.encode("utf-8")).hexdigest()
 (HERE / "evidence" / "exp_fisica_vs_sensor_20260718.sha256").write_text(sha + "\n")
 print("=" * 70)
