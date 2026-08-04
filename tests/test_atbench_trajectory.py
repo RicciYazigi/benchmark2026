@@ -9,10 +9,22 @@ sys.path.insert(
     0, str(pathlib.Path(__file__).resolve().parents[1] / "adapters_external")
 )
 
-from fourr2_singleturn_baseline_adapter import (
-    FourR2SingleTurnBaselineAdapter,  # noqa: E402
+import pytest
+
+try:
+    from fourr2_singleturn_baseline_adapter import (
+        FourR2SingleTurnBaselineAdapter,  # noqa: E402
+    )
+    from fourr2_trajectory_adapter import FourR2TrajectoryAdapter  # noqa: E402
+    has_fourr2 = True
+except ImportError:
+    has_fourr2 = False
+
+# Skip entire module if external 4R2 repository is not configured/accessible
+pytestmark = pytest.mark.skipif(
+    not has_fourr2,
+    reason="Define FOURR2_REPO_PATH -> raiz de 4r2v6 (four_r2/guardrail.py)."
 )
-from fourr2_trajectory_adapter import FourR2TrajectoryAdapter  # noqa: E402
 
 from aegisbench.datasets.atbench_loader import load_atbench
 from aegisbench.interfaces.v1 import GovernanceDecision
