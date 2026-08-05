@@ -26,8 +26,8 @@ pytestmark = pytest.mark.skipif(
     reason="Define FOURR2_REPO_PATH -> raiz de 4r2v6 (four_r2/guardrail.py)."
 )
 
-from aegisbench.datasets.atbench_loader import load_atbench
-from aegisbench.interfaces.v1 import GovernanceDecision
+from aegisbench.datasets.atbench_loader import load_atbench  # noqa: E402
+from aegisbench.interfaces.v1 import GovernanceDecision  # noqa: E402
 
 
 def test_load_atbench():
